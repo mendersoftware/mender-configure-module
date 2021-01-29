@@ -13,5 +13,8 @@ test:unit:
   stage: test
   needs: []
   image: alpine:latest
+  before_script:
+    - apk add --update git
+    - git submodule update --init --recursive
   script:
-    - echo "Testing..."
+    - test/test_install.sh
