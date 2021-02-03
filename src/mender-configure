@@ -2,13 +2,69 @@
 
 set -e
 
+CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
+APPLY_CMD=${TEST_APPLY_CMD:-/usr/lib/mender-configure/apply-device-config}
+
 STATE="$1"
 FILES="$2"
+
+BACKUP="$FILES/device-config-backup.json"
+
+safe_copy() {
+    if [ -n "$3" ]; then
+        echo "safe_copy can only handle one file copy at a time" 1>&2
+        exit 2
+    fi
+    cp "$1" "$2".tmp
+    sync "$2".tmp
+    mv "$2".tmp "$2"
+    sync "$(dirname "$2")"
+}
 
 case "$STATE" in
 
     ArtifactInstall)
-        echo "Dummy install"
+        if [ -e "$CONFIG" ]; then
+            safe_copy "$CONFIG" "$BACKUP"
+        fi
+        safe_copy "$FILES/meta-data" "$CONFIG"
+        RET=0
+        "$APPLY_CMD" "$CONFIG" || RET=$?
+        if [ $RET -eq 20 ]; then
+            touch "$FILES/needs-reboot"
+            sync "$FILES/needs-reboot"
+            sync "$FILES"
+            exit 0
+        else
+            exit $RET
+        fi
+        ;;
+
+    NeedsArtifactReboot)
+        if [ -e "$FILES/needs-reboot" ]; then
+            echo "Automatic"
+        else
+            echo "No"
+        fi
+        ;;
+
+    ArtifactRollback)
+        if ! [ -e "$BACKUP" ]; then
+            # Either there was no preexisting configuration, or the update was
+            # interrupted before we could make a backup: Nothing to do.
+            exit 0
+        fi
+        safe_copy "$BACKUP" "$CONFIG"
+        RET=0
+        "$APPLY_CMD" "$CONFIG" || RET=$?
+        if [ $RET -eq 20 ]; then
+            touch "$FILES/needs-reboot"
+            sync "$FILES/needs-reboot"
+            sync "$FILES"
+            exit 0
+        else
+            exit $RET
+        fi
         ;;
 
 esac
