@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+
+# Send all output to stderr, to avoid confusing the inventory parser in the
+# client, which should only receive empty output from this script. The actual
+# reporting we will do ourselves.
+exec 1>&2
+
+CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
+
+# Fetch Authentication token and server from Mender Auth Manager.
+DBUS_REPLY="$(dbus-send \
+                        --system \
+                        --print-reply \
+                        --dest=io.mender.AuthenticationManager \
+                        /io/mender/AuthenticationManager \
+                        io.mender.Authentication1.GetJwtToken \
+                        | sed -ne '/^ *string ".*" *$/ {s/^ *string "\(.*\)" *$/\1/; p}')"
+
+AUTH_TOKEN="$(echo "$DBUS_REPLY" | sed -ne '1p')"
+SERVER="$(echo "$DBUS_REPLY" | sed -ne '2p')"
+
+if [ -z "$AUTH_TOKEN" ]; then
+    echo "An authentication token could not be obtained over DBus."
+    exit 1
+fi
+if [ -z "$SERVER" ]; then
+    echo "A server address could not be obtained over DBus."
+    exit 1
+fi
+
+curl \
+    -Lf \
+    -X PUT \
+    -H "Authorization: Bearer ${AUTH_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${CONFIG}" \
+    "${SERVER}/configuration"
