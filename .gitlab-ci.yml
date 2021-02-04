@@ -17,4 +17,4 @@ test:unit:
     - apk add --update git
     - git submodule update --init --recursive
   script:
-    - tests/test_install.sh
+    - tests/test_module.sh
