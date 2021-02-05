@@ -8,7 +8,7 @@ set -e
 exec 1>&2
 
 CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
-CONFIG_ENDPOINT="configuration"
+CONFIG_ENDPOINT=${TEST_CONFIG_ENDPOINT:-configuration}
 
 # Fetch Authentication token and server from Mender Auth Manager.
 DBUS_REPLY="$(dbus-send \

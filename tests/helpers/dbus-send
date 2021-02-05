@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ "$TEST_AUTH_TOKEN_EMPTY" = 1 ];then
+    TEST_AUTH_TOKEN=
+else
+    TEST_AUTH_TOKEN="${TEST_AUTH_TOKEN:-ThisIsAnAuthToken}"
+fi
+
+if [ "$TEST_SERVER_URL_EMPTY" = 1 ]; then
+    TEST_SERVER_URL=
+else
+    TEST_SERVER_URL="${TEST_SERVER_URL:-https://docker.mender.io}"
+fi
+
+# Taken from a mendersoftware/mender-client-qemu:2.6.0 session, with this
+# command:
+#
+# dbus-send --system --dest=io.mender.AuthenticationManager --print-reply \
+#     /io/mender/AuthenticationManager io.mender.Authentication1.GetJwtToken
+cat <<EOF
+method return time=1612339847.127751 sender=:1.6 -> destination=:1.9 serial=8 reply_serial=2
+   string "$TEST_AUTH_TOKEN"
+   string "$TEST_SERVER_URL"
+EOF
