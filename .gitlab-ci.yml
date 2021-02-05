@@ -14,7 +14,7 @@ test:unit:
   needs: []
   image: alpine:latest
   before_script:
-    - apk add --update git
+    - apk add --update git make
     - git submodule update --init --recursive
   script:
-    - tests/test_install.sh
+    - make test
