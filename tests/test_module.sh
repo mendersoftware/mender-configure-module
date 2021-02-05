@@ -118,6 +118,10 @@ testArtifactCommit() {
 }
 
 testArtifactRollback() {
+    output="$(./$mender_configure SupportsRollback "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "Yes" "${output}"
+
     output="$(./$mender_configure ArtifactInstall "${module_dir}")"
     assertEquals 0 $?
     assertEquals "" "${output}"
