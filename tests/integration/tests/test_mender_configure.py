@@ -13,6 +13,12 @@
 #    limitations under the License.
 #
 
+import logging
 
-def test_dummy():
-    assert True
+from mender_test_containers.helpers import run
+
+
+def test_mender_configure(setup_test_container, setup_tester_ssh_connection):
+    result = run(setup_tester_ssh_connection, "mender -show-artifact", warn=True)
+    logging.debug(result)
+    assert "mender-image-master" in result.stdout
