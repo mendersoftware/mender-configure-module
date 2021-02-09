@@ -1,0 +1,8 @@
+version: '2.1'
+services:
+
+    #
+    # mender-client-rofs with Mender Configure Module
+    #
+    mender-client:
+            image: mendersoftware/mender-client-qemu-rofs-mender-configure

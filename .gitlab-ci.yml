@@ -8,6 +8,11 @@ include:
     file: '.gitlab-ci-check-commits.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-license.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-python3-format.yml'
+
+variables:
+  MENDER_VERSION: master
 
 test:unit:
   stage: test
@@ -18,3 +23,27 @@ test:unit:
     - git submodule update --init --recursive
   script:
     - make test
+
+test:integration:
+  stage: test
+  image: docker:18-dind
+  tags:
+    - mender-qa-slave
+  before_script:
+    - /usr/local/bin/dockerd-entrypoint.sh &
+    - sleep 10
+    - export DOCKER_HOST="unix:///var/run/docker.sock"
+    - docker version
+    - export
+    # Install test dependencies
+    - apk --update --no-cache add bash gcc make curl util-linux openssh
+      python3 python3-dev libc-dev libffi-dev openssl-dev libc6-compat git
+    - CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install -r tests/integration/requirements.txt
+    - pip3 install docker-compose==1.24.0
+    # Init the git submodules
+    - git submodule update --init --recursive
+    # Log in to the private Docker registry
+    - docker login -u ${REGISTRY_MENDER_IO_USERNAME} -p ${REGISTRY_MENDER_IO_PASSWORD} registry.mender.io
+  script:
+    - cd tests/integration/
+    - ./run.sh
