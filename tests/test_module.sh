@@ -12,10 +12,6 @@ mender_configure="${test_dir}/../src/mender-configure"
 export TEST_CONFIG="${state_dir}/device-config.json"
 export TEST_APPLY_CMD="${applycmd_dir}/apply-device-config"
 
-oneTimeTearDown() {
-    rm -rf "${tmp_dir}"
-}
-
 setUp() {
     mkdir -p "${tmp_dir}"
     mkdir -p "${state_dir}"
@@ -122,6 +118,10 @@ testArtifactCommit() {
 }
 
 testArtifactRollback() {
+    output="$(./$mender_configure SupportsRollback "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "Yes" "${output}"
+
     output="$(./$mender_configure ArtifactInstall "${module_dir}")"
     assertEquals 0 $?
     assertEquals "" "${output}"

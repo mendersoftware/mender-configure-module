@@ -3,3 +3,4 @@ check: test
 
 test:
 	./test_module.sh
+	./test_inventory.sh
