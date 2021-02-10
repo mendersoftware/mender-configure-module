@@ -44,7 +44,7 @@ case "$STATE" in
         if [ -e "$CONFIG" ]; then
             safe_copy "$CONFIG" "$BACKUP"
         fi
-        safe_copy "$FILES/meta-data" "$CONFIG"
+        safe_copy "$FILES/header/meta-data" "$CONFIG"
         RET=0
         "$APPLY_CMD" "$CONFIG" || RET=$?
         if [ $RET -eq 20 ]; then

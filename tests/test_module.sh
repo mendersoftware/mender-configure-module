@@ -25,7 +25,8 @@ echo "\$(basename "\$0")" "\$@" >> "${applycmd_log}"
 EOF
     chmod ugo+x "${TEST_APPLY_CMD}"
 
-    cat > "${module_dir}/meta-data" <<EOF
+    mkdir -p "${module_dir}/header"
+    cat > "${module_dir}/header/meta-data" <<EOF
 {"new":"value"}
 EOF
 
