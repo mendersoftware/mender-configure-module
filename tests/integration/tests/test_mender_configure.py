@@ -14,11 +14,65 @@
 #
 
 import logging
+import os
+import tempfile
 
-from mender_test_containers.helpers import run
+from mender_test_containers.helpers import run, put
+
+from helpers import make_configuration_artifact
 
 
 def test_mender_configure(setup_test_container, setup_tester_ssh_connection):
-    result = run(setup_tester_ssh_connection, "mender -show-artifact", warn=True)
-    logging.debug(result)
-    assert "mender-image-master" in result.stdout
+    configuration = {"key": "value"}
+    configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
+    configuration_artifact_name = configuration_artifact.name
+
+    # Install the apply-device-config script
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    tf.write("#/bin/sh\nexit 0\n".encode("utf-8"))
+    tf.close()
+
+    try:
+        run(
+            setup_tester_ssh_connection, "mount -o remount,rw /", warn=True,
+        )
+        run(
+            setup_tester_ssh_connection,
+            "mkdir -p /usr/lib/mender-configure",
+            warn=True,
+        )
+        put(
+            setup_tester_ssh_connection,
+            configuration_artifact_name,
+            key_filename=tf.name,
+            remote_path="/usr/lib/mender-configure/apply-device-config",
+        )
+        run(
+            setup_tester_ssh_connection,
+            "chmod 755 /usr/lib/mender-configure/apply-device-config",
+            warn=True,
+        )
+    finally:
+        os.unlink(tf.name)
+
+    # Install the configuration artifact
+    make_configuration_artifact(
+        configuration, "configuration-artifact", configuration_artifact_name
+    )
+    try:
+        put(
+            setup_tester_ssh_connection,
+            configuration_artifact_name,
+            key_filename=setup_test_container.key_filename,
+            remote_path="/data/configuration-artifact.mender",
+        )
+
+        result = run(
+            setup_tester_ssh_connection,
+            "mender -install /data/configuration-artifact.mender",
+            warn=True,
+        )
+        logging.debug(result)
+        assert result.exited == 0
+    finally:
+        os.unlink(configuration_artifact_name)

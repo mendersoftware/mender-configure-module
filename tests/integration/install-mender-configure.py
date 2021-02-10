@@ -15,6 +15,7 @@
 #
 
 import os
+import tempfile
 
 from ext4_manipulator import get, put, extract_ext4, insert_ext4
 
@@ -41,6 +42,18 @@ def main():
         rootfs=rootfs,
         remote_path_mkdir_p=True,
     )
+
+    # create empty folder
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        put(
+            local_path=tf.name,
+            remote_path="/var/lib/mender-configure/.empty-folder",
+            rootfs=rootfs,
+            remote_path_mkdir_p=True,
+        )
+    finally:
+        os.unlink(tf.name)
 
     # Put back ext4 image into img.
     insert_ext4(img=img, rootfs=rootfs)
