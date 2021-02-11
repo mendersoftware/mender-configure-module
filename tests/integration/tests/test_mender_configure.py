@@ -61,9 +61,7 @@ def test_mender_configure_successful_deployment(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection,
-        "cat /var/lib/mender-configure/device-config.json",
-        warn=True,
+        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
 
@@ -73,7 +71,7 @@ def test_mender_configure_successful_deployment(
     device_config = json.loads(result.stdout)
     assert device_config == configuration
 
-    # Generate a new  configuration artifact
+    # Generate a new configuration artifact
     configuration = {"new-key": "new-value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -103,14 +101,12 @@ def test_mender_configure_successful_deployment(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection,
-        "cat /var/lib/mender-configure/device-config.json",
-        warn=True,
+        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
 
-    assert "key" in result.stdout, result
-    assert "value" in result.stdout, result
+    assert "new-key" in result.stdout, result
+    assert "new-value" in result.stdout, result
 
     device_config = json.loads(result.stdout)
     assert device_config == configuration
@@ -156,9 +152,7 @@ def test_mender_configure_successful_deployment_needs_reboot(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection,
-        "cat /var/lib/mender-configure/device-config.json",
-        warn=True,
+        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
     assert result.exited == 0
@@ -182,14 +176,13 @@ def test_mender_configure_successful_deployment_needs_reboot(
 def test_mender_configure_failed_deployment_config_is_a_folder(
     setup_test_container, setup_tester_ssh_connection
 ):
-    # Install a configuration apply script which requires reboot
+    # Install a no-op configuration apply script
     make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 0\n")
 
     # Lock the configuration file with a folder
     run(
         setup_tester_ssh_connection,
         "mkdir -p /var/lib/mender-configure/device-config.json",
-        warn=True,
     )
 
     # Generate a simple configuration artifact
@@ -228,7 +221,7 @@ def test_mender_configure_failed_deployment_config_is_a_folder(
 def test_mender_configure_failed_deployment_apply_fails(
     setup_test_container, setup_tester_ssh_connection
 ):
-    # Install a configuration apply script which requires reboot
+    # Install a configuration apply script which fails
     make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 2\n")
 
     # Install a pre-existing configuration
@@ -260,13 +253,6 @@ def test_mender_configure_failed_deployment_apply_fails(
             configuration_artifact_name,
             key_filename=setup_test_container.key_filename,
             remote_path="/data/configuration-artifact.mender",
-        )
-
-        # Disable writes to the file
-        run(
-            setup_tester_ssh_connection,
-            "chattr -i /var/lib/mender-configure/device-config.json",
-            warn=True,
         )
 
         result = run(

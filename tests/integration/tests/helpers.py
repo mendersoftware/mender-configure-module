@@ -52,7 +52,7 @@ def make_configuration_artifact(
 def make_configuration_apply_script(setup_tester_ssh_connection, script):
     # Enable writes
     run(
-        setup_tester_ssh_connection, "mount -o remount,rw /", warn=True,
+        setup_tester_ssh_connection, "mount -o remount,rw /",
     )
 
     # Install the apply-device-config script
@@ -62,9 +62,7 @@ def make_configuration_apply_script(setup_tester_ssh_connection, script):
 
     try:
         run(
-            setup_tester_ssh_connection,
-            "mkdir -p /usr/lib/mender-configure",
-            warn=True,
+            setup_tester_ssh_connection, "mkdir -p /usr/lib/mender-configure",
         )
         put(
             setup_tester_ssh_connection,
@@ -75,12 +73,10 @@ def make_configuration_apply_script(setup_tester_ssh_connection, script):
         run(
             setup_tester_ssh_connection,
             "chmod 755 /usr/lib/mender-configure/apply-device-config",
-            warn=True,
         )
     finally:
         os.unlink(tf.name)
-
-    # Disable writes
-    run(
-        setup_tester_ssh_connection, "mount -o remount,ro /", warn=True,
-    )
+        # Disable writes
+        run(
+            setup_tester_ssh_connection, "mount -o remount,ro /",
+        )
