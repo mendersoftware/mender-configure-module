@@ -71,6 +71,48 @@ def test_mender_configure_successful_deployment(
     device_config = json.loads(result.stdout)
     assert device_config == configuration
 
+    # Generate a new  confiugration artifact
+    configuration = {"new-key": "new-value"}
+    configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
+    configuration_artifact_name = configuration_artifact.name
+
+    make_configuration_artifact(
+        configuration, "new-configuration-artifact", configuration_artifact_name
+    )
+
+    # Install the configuration artifact
+    try:
+        put(
+            setup_tester_ssh_connection,
+            configuration_artifact_name,
+            key_filename=setup_test_container.key_filename,
+            remote_path="/data/new-configuration-artifact.mender",
+        )
+
+        result = run(
+            setup_tester_ssh_connection,
+            "mender -install /data/new-configuration-artifact.mender",
+            warn=True,
+        )
+        logging.debug(result)
+        assert result.exited == 0
+    finally:
+        os.unlink(configuration_artifact_name)
+
+    # Verify the content of the configuration
+    result = run(
+        setup_tester_ssh_connection,
+        "cat /var/lib/mender-configure/device-config.json",
+        warn=True,
+    )
+    logging.debug(result)
+
+    assert "key" in result.stdout, result
+    assert "value" in result.stdout, result
+
+    device_config = json.loads(result.stdout)
+    assert device_config == configuration
+
 
 def test_mender_configure_successful_deployment_needs_reboot(
     setup_test_container, setup_tester_ssh_connection
