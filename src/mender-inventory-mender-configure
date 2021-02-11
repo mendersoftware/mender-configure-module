@@ -21,7 +21,12 @@ set -e
 exec 1>&2
 
 CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
-CONFIG_ENDPOINT=${TEST_CONFIG_ENDPOINT:-configuration}
+CONFIG_ENDPOINT=${TEST_CONFIG_ENDPOINT:-api/devices/v1/deviceconfig/configuration}
+
+# If the configuration file doesn't exist, exit silently
+if ! [ -f "$CONFIG" ]; then
+    exit 0
+fi
 
 # Fetch Authentication token and server from Mender Auth Manager.
 DBUS_REPLY="$(dbus-send \
@@ -49,5 +54,5 @@ curl \
     -X PUT \
     -H "Authorization: Bearer ${AUTH_TOKEN}" \
     -H "Content-Type: application/json" \
-    -d "${CONFIG}" \
+    -d "@${CONFIG}" \
     "${SERVER}/${CONFIG_ENDPOINT}"
