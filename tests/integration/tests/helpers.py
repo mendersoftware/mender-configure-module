@@ -20,6 +20,9 @@ import subprocess
 
 from tempfile import NamedTemporaryFile
 
+from mender_test_containers.helpers import run, put
+
+
 # The helpers assume the tools are in the path
 _MENDER_ARTIFACT_TOOL_PATH = "mender-artifact"
 
@@ -44,3 +47,40 @@ def make_configuration_artifact(
         subprocess.check_call(cmd, shell=True)
     finally:
         os.unlink(configuration_file.name)
+
+
+def make_configuration_apply_script(setup_tester_ssh_connection, script):
+    # Enable writes
+    run(
+        setup_tester_ssh_connection, "mount -o remount,rw /", warn=True,
+    )
+
+    # Install the apply-device-config script
+    tf = NamedTemporaryFile(delete=False)
+    tf.write(script.encode("utf-8"))
+    tf.close()
+
+    try:
+        run(
+            setup_tester_ssh_connection,
+            "mkdir -p /usr/lib/mender-configure",
+            warn=True,
+        )
+        put(
+            setup_tester_ssh_connection,
+            tf.name,
+            key_filename=tf.name,
+            remote_path="/usr/lib/mender-configure/apply-device-config",
+        )
+        run(
+            setup_tester_ssh_connection,
+            "chmod 755 /usr/lib/mender-configure/apply-device-config",
+            warn=True,
+        )
+    finally:
+        os.unlink(tf.name)
+
+    # Disable writes
+    run(
+        setup_tester_ssh_connection, "mount -o remount,ro /", warn=True,
+    )
