@@ -16,9 +16,11 @@
 import json
 import logging
 import os
+import pytest
 import tempfile
 
 from mender_test_containers.helpers import run, put
+from mender_integration.tests.MenderAPI import devauth, deploy
 
 from helpers import make_configuration_artifact, make_configuration_apply_script
 
@@ -29,7 +31,7 @@ def test_mender_configure_successful_deployment(
     # Install a no-op configuration apply script
     make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 0\n")
 
-    # Generate a simple confiugration artifact
+    # Generate a simple configuration artifact
     configuration = {"key": "value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -71,7 +73,7 @@ def test_mender_configure_successful_deployment(
     device_config = json.loads(result.stdout)
     assert device_config == configuration
 
-    # Generate a new  confiugration artifact
+    # Generate a new  configuration artifact
     configuration = {"new-key": "new-value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -120,7 +122,7 @@ def test_mender_configure_successful_deployment_needs_reboot(
     # Install a configuration apply script which requires reboot
     make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 20\n")
 
-    # Generate a simple confiugration artifact
+    # Generate a simple configuration artifact
     configuration = {"key": "value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -190,7 +192,7 @@ def test_mender_configure_failed_deployment_config_is_a_folder(
         warn=True,
     )
 
-    # Generate a simple confiugration artifact
+    # Generate a simple configuration artifact
     new_configuration = {"new-key": "new-value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -242,7 +244,7 @@ def test_mender_configure_failed_deployment_apply_fails(
     )
     os.unlink(configuration_file_name)
 
-    # Generate a simple confiugration artifact
+    # Generate a simple configuration artifact
     new_configuration = {"new-key": "new-value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
     configuration_artifact_name = configuration_artifact.name
@@ -295,3 +297,26 @@ def test_mender_configure_failed_deployment_apply_fails(
 
     device_config = json.loads(result.stdout)
     assert device_config == configuration
+
+
+@pytest.mark.usefixtures("standard_setup_one_rofs_configure_client")
+def test_mender_configure_managed_configuration():
+    # Generate a simple configuration artifact
+    new_configuration = {"key": "value"}
+    configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
+    configuration_artifact_name = configuration_artifact.name
+
+    make_configuration_artifact(
+        new_configuration, "configuration-artifact", configuration_artifact_name
+    )
+
+    deploy.upload_image(configuration_artifact_name)
+    devices = list(
+        set([device["id"] for device in devauth.get_devices_status("accepted")])
+    )
+    deployment_id = deploy.trigger_deployment(
+        name="configuration", artifact_name="configuration-artifact", devices=devices
+    )
+
+    # Check finished status only from server point of view
+    deploy.check_expected_status("finished", deployment_id)

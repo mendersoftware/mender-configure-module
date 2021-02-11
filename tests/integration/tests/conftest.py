@@ -26,6 +26,9 @@ import filelock
 import pytest
 import urllib3
 
+from mender_integration.testutils.infra.container_manager import docker_compose_manager
+from mender_integration.testutils.infra.device import MenderDevice
+from mender_integration.tests.MenderAPI import auth, devauth, reset_mender_api
 from mender_test_containers.conftest import *
 from mender_test_containers.container_props import *
 
@@ -69,3 +72,38 @@ def setup_test_container_props(request):
 @pytest.fixture(scope="session")
 def mender_version():
     return "master"
+
+
+class DockerComposeStandardSetupOneConfigureRofsClient(
+    docker_compose_manager.DockerComposeNamespace
+):
+    def __init__(
+        self, extra_compose_file="../docker-compose.client.rofs.configure.yml"
+    ):
+        compose_files = docker_compose_manager.DockerComposeNamespace.QEMU_CLIENT_FILES
+        compose_files += [
+            path.join(
+                path.dirname(__file__),
+                "../mender_integration/docker-compose.config.yml",
+            ),
+            path.join(path.dirname(__file__), extra_compose_file),
+        ]
+        docker_compose_manager.DockerComposeNamespace.__init__(
+            self, name="mender", extra_files=compose_files
+        )
+
+
+@pytest.fixture(scope="function")
+def standard_setup_one_rofs_configure_client(request):
+    env = DockerComposeStandardSetupOneConfigureRofsClient()
+    request.addfinalizer(env.teardown)
+
+    env.setup()
+
+    env.device = MenderDevice(env.get_mender_clients()[0])
+    env.device.ssh_is_opened()
+
+    reset_mender_api(env)
+    devauth.accept_devices(1)
+
+    return env
