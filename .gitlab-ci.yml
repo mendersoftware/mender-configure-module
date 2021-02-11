@@ -13,6 +13,7 @@ include:
 
 variables:
   MENDER_VERSION: master
+  MENDER_ARTIFACT_VERSION: master
 
 test:unit:
   stage: test
@@ -44,6 +45,10 @@ test:integration:
     - git submodule update --init --recursive
     # Log in to the private Docker registry
     - docker login -u ${REGISTRY_MENDER_IO_USERNAME} -p ${REGISTRY_MENDER_IO_PASSWORD} registry.mender.io
+    # Download and install mender-artifact
+    - curl -f -O https://mender.s3.amazonaws.com/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
+    - chmod ugo+x mender-artifact
+    - mv mender-artifact /usr/bin/
   script:
     - cd tests/integration/
     - ./run.sh
