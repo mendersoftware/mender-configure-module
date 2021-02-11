@@ -16,6 +16,7 @@
 import http.server as server
 import os
 
+
 class MenderConfigureHandler(server.BaseHTTPRequestHandler):
     def do_PUT(self):
         auth = self.headers.get("Authorization", "")
@@ -36,6 +37,7 @@ class MenderConfigureHandler(server.BaseHTTPRequestHandler):
 
         self.end_headers()
 
+
 if __name__ == "__main__":
-    s = server.HTTPServer(('', 8080), MenderConfigureHandler)
+    s = server.HTTPServer(("", 8080), MenderConfigureHandler)
     s.serve_forever()
