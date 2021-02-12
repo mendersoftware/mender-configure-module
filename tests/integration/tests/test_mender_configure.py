@@ -16,11 +16,16 @@
 import json
 import logging
 import os
-import pytest
 import tempfile
+import time
 
 from mender_test_containers.helpers import run, put
-from mender_integration.tests.MenderAPI import devauth, deploy
+from mender_integration.tests.MenderAPI import (
+    authentication,
+    devauth,
+    get_container_manager,
+)
+from mender_integration.tests.MenderAPI.requests_helpers import requests_retry
 
 from helpers import make_configuration_artifact, make_configuration_apply_script
 
@@ -285,24 +290,60 @@ def test_mender_configure_failed_deployment_apply_fails(
     assert device_config == configuration
 
 
-@pytest.mark.usefixtures("standard_setup_one_rofs_configure_client")
-def test_mender_configure_managed_configuration():
-    # Generate a simple configuration artifact
-    new_configuration = {"key": "value"}
-    configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
-    configuration_artifact_name = configuration_artifact.name
-
-    make_configuration_artifact(
-        new_configuration, "configuration-artifact", configuration_artifact_name
+def test_mender_configure_managed_configuration(
+    standard_setup_one_rofs_configure_client,
+):
+    # Make the mender-configure inventory script executable.
+    # This is needed because ext4_manipulator.py doesn't support
+    # setting permissions, and when we replace the inventory script
+    # in install-mender-configure.py, we set permissions to 644 which
+    # prevents the Mender Client executing it
+    mender_device = standard_setup_one_rofs_configure_client.device
+    mender_device.run("mount -o remount,rw /", wait=60)
+    mender_device.run(
+        "chmod 755 /usr/share/mender/inventory/mender-inventory-mender-configure",
+        wait=60,
     )
+    mender_device.run("mount -o remount,ro /", wait=60)
 
-    deploy.upload_image(configuration_artifact_name)
+    # list of devices
     devices = list(
         set([device["id"] for device in devauth.get_devices_status("accepted")])
     )
-    deployment_id = deploy.trigger_deployment(
-        name="configuration", artifact_name="configuration-artifact", devices=devices
+    assert 1 == len(devices)
+
+    # set the device's configuration
+    configuration = {"key": "value"}
+    configuration_url = (
+        "https://%s/api/management/v1/deviceconfig/configurations/device/%s"
+        % (get_container_manager().get_mender_gateway(), devices[0],)
+    )
+    auth = authentication.Authentication()
+    r = requests_retry().put(
+        configuration_url,
+        verify=False,
+        headers=auth.get_auth_token(),
+        json=configuration,
     )
 
-    # Check finished status only from server point of view
-    deploy.check_expected_status("finished", deployment_id)
+    # deploy the configurations
+    r = requests_retry().post(
+        configuration_url + "/deploy",
+        verify=False,
+        headers=auth.get_auth_token(),
+        json={"retries": 0},
+    )
+
+    # loop and verify the reported configuration
+    reported = None
+    for i in range(180):
+        r = requests_retry().get(
+            configuration_url, verify=False, headers=auth.get_auth_token(),
+        )
+        assert r.status_code == 200
+        reported = r.json().get("reported")
+        if reported == configuration:
+            break
+        time.sleep(1)
+
+    assert configuration == reported

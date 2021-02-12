@@ -28,7 +28,7 @@ import urllib3
 
 from mender_integration.testutils.infra.container_manager import docker_compose_manager
 from mender_integration.testutils.infra.device import MenderDevice
-from mender_integration.tests.MenderAPI import auth, devauth, reset_mender_api
+from mender_integration.tests.MenderAPI import devauth, reset_mender_api
 from mender_test_containers.conftest import *
 from mender_test_containers.container_props import *
 
