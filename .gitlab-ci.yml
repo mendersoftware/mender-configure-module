@@ -28,22 +28,31 @@ test:unit:
 test:integration:
   stage: test
   needs: []
-  image: docker:18-dind
+  image: docker:19.03-dind
   tags:
     - mender-qa-slave
   before_script:
-    - /usr/local/bin/dockerd-entrypoint.sh &
-    - sleep 10
-    - export DOCKER_HOST="unix:///var/run/docker.sock"
+    # DinD setup in mender-qa-slave
+    - unset DOCKER_HOST
+    - unset DOCKER_TLS_VERIFY
+    - unset DOCKER_CERT_PATH
+    # Start dockerd in the background
+    - /usr/local/bin/dockerd &
+    # Wait for dockerd to start
+    - |-
+      MAX_WAIT=30
+      while [ ! -e "/var/run/docker.sock" ] && [ $MAX_WAIT -gt 0 ]; do
+        MAX_WAIT=$(($MAX_WAIT - 1))
+        sleep 1
+      done
+    # Verify that the docker server is up and running
     - docker version
-    - export
-    # Install test dependencies
-    - apk --update --no-cache add bash gcc make curl util-linux openssh
-      python3 python3-dev libc-dev libffi-dev openssl-dev libc6-compat git
-    - CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install -r tests/integration/requirements.txt
-    - pip3 install docker-compose==1.24.0
     # Init the git submodules
+    - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
     - git submodule update --init --recursive
+    # Install test dependencies
+    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements/apk-requirements.txt)
+    - pip install -r tests/integration/mender_integration/tests/requirements/python-requirements.txt
     # Log in to the private Docker registry
     - docker login -u ${REGISTRY_MENDER_IO_USERNAME} -p ${REGISTRY_MENDER_IO_PASSWORD} registry.mender.io
     # Download and install mender-artifact
