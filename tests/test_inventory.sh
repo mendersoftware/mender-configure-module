@@ -49,7 +49,7 @@ testSuccessfulReport() {
     # Script should never return output on stdout, this goes for all the test
     # cases.
     assertEquals "" "${output}"
-    assertEquals 'Log: path = "/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
 }
 
 testInvalidEndpoint() {
@@ -73,7 +73,7 @@ testWrongJwtToken() {
     output="$("${inv_script}")"
     assertNotEquals 0 $?
     assertEquals "" "${output}"
-    assertEquals 'Log: path = "/configuration", auth_token = "Bearer WrongToken"' "$(cat "$TEST_HTTP_LOG")"
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer WrongToken"' "$(cat "$TEST_HTTP_LOG")"
 }
 
 testMissingServer() {

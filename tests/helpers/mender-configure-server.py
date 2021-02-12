@@ -21,7 +21,7 @@ class MenderConfigureHandler(server.BaseHTTPRequestHandler):
     def do_PUT(self):
         auth = self.headers.get("Authorization", "")
 
-        if self.path != "/configuration":
+        if self.path != "/api/devices/v1/deviceconfig/configuration":
             response = 404
         elif auth != "Bearer ThisIsAnAuthToken":
             response = 401
