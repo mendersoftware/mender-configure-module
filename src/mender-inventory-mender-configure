@@ -21,10 +21,18 @@ set -e
 exec 1>&2
 
 CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
+CONFIG_CHECKSUM=${TEST_CONFIG_CHECKSUM:-/var/lib/mender-configure/device-config-reported.sha256}
 CONFIG_ENDPOINT=${TEST_CONFIG_ENDPOINT:-api/devices/v1/deviceconfig/configuration}
 
 # If the configuration file doesn't exist, exit silently
 if ! [ -f "$CONFIG" ]; then
+    exit 0
+fi
+
+COMPUTED_CHECKSUM="$(cat "$CONFIG" | sha256sum -)"
+
+if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSUM")" ]; then
+    # If checksum hasn't changed since previous report, exit silently.
     exit 0
 fi
 
@@ -49,6 +57,7 @@ if [ -z "$SERVER" ]; then
     exit 1
 fi
 
+# Do the report.
 curl \
     -Lf \
     -X PUT \
@@ -56,3 +65,9 @@ curl \
     -H "Content-Type: application/json" \
     -d "@${CONFIG}" \
     "${SERVER}/${CONFIG_ENDPOINT}"
+
+# Update checksum atomically.
+echo "$COMPUTED_CHECKSUM" > "$CONFIG_CHECKSUM.tmp"
+sync "$CONFIG_CHECKSUM.tmp"
+mv "$CONFIG_CHECKSUM.tmp" "$CONFIG_CHECKSUM"
+sync "$(dirname "$CONFIG_CHECKSUM")"

@@ -7,6 +7,7 @@ inv_script="${test_dir}/../src/mender-inventory-mender-configure"
 
 # Override variables inside the inventory script.
 export TEST_CONFIG="${state_dir}/device-config.json"
+export TEST_CONFIG_CHECKSUM="${state_dir}/device-config-reported.sha256"
 export TEST_HTTP_LOG="${tmp_dir}/http.log"
 
 oneTimeSetUp() {
@@ -90,6 +91,37 @@ testWrongServer() {
     assertNotEquals 0 $?
     assertEquals "" "${output}"
     assertEquals "" "$(cat "$TEST_HTTP_LOG" 2>/dev/null)"
+}
+
+testReportCaching() {
+    output="$("${inv_script}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
+
+    output="$("${inv_script}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+    # Despite being called a second time, the caching should have kicked in and
+    # prevented reporting.
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
+
+    # Change the config.
+    echo '{"new":"value"}' > "${TEST_CONFIG}"
+
+    output="$("${inv_script}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+    # Now there should be a second report.
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
+Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
+
+    output="$("${inv_script}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+    # But no third report.
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
+Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
 }
 
 
