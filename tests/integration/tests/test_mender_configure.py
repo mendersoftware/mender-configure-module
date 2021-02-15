@@ -31,7 +31,7 @@ from mender_integration.tests.MenderAPI.requests_helpers import requests_retry
 from helpers import make_configuration_artifact, make_configuration_apply_script
 
 
-def test_mender_configure_successful_deployment(
+def test_mender_configure_successful_install(
     setup_test_container, setup_tester_ssh_connection
 ):
     # Install a no-op configuration apply script
@@ -57,7 +57,7 @@ def test_mender_configure_successful_deployment(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender -install /data/configuration-artifact.mender",
+            "mender install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -76,6 +76,11 @@ def test_mender_configure_successful_deployment(
 
     device_config = json.loads(result.stdout)
     assert device_config == configuration
+
+    # commit the installation
+    result = run(setup_tester_ssh_connection, "mender commit", warn=True,)
+    logging.debug(result)
+    assert result.exited == 0
 
     # Generate a new configuration artifact
     configuration = {"new-key": "new-value"}
@@ -97,7 +102,7 @@ def test_mender_configure_successful_deployment(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender -install /data/new-configuration-artifact.mender",
+            "mender install /data/new-configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -118,7 +123,7 @@ def test_mender_configure_successful_deployment(
     assert device_config == configuration
 
 
-def test_mender_configure_successful_deployment_needs_reboot(
+def test_mender_configure_successful_install_needs_reboot(
     setup_test_container, setup_tester_ssh_connection
 ):
     # Install a configuration apply script which requires reboot
@@ -144,7 +149,7 @@ def test_mender_configure_successful_deployment_needs_reboot(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender -install /data/configuration-artifact.mender",
+            "mender install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -179,7 +184,7 @@ def test_mender_configure_successful_deployment_needs_reboot(
     assert result.exited == 0
 
 
-def test_mender_configure_failed_deployment_config_is_a_folder(
+def test_mender_configure_failed_install_config_is_a_folder(
     setup_test_container, setup_tester_ssh_connection
 ):
     # Install a no-op configuration apply script
@@ -190,6 +195,12 @@ def test_mender_configure_failed_deployment_config_is_a_folder(
         setup_tester_ssh_connection,
         "mkdir -p /var/lib/mender-configure/device-config.json",
     )
+
+    # capture artifact and provides
+    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    artifact = result.stdout
+    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    provides = result.stdout
 
     # Generate a simple configuration artifact
     new_configuration = {"new-key": "new-value"}
@@ -211,7 +222,7 @@ def test_mender_configure_failed_deployment_config_is_a_folder(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender -install /data/configuration-artifact.mender",
+            "mender install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -223,8 +234,15 @@ def test_mender_configure_failed_deployment_config_is_a_folder(
     finally:
         os.unlink(configuration_artifact_name)
 
+    # capture the new artifact and provides and verify they didn't change
+    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    new_artifact = result.stdout
+    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    new_provides = result.stdout
+    assert (new_artifact, new_provides) == (artifact, provides)
 
-def test_mender_configure_failed_deployment_apply_fails(
+
+def test_mender_configure_failed_install_apply_fails(
     setup_test_container, setup_tester_ssh_connection
 ):
     # Install a configuration apply script which fails
@@ -243,6 +261,12 @@ def test_mender_configure_failed_deployment_apply_fails(
     )
     os.unlink(configuration_file_name)
 
+    # capture artifact and provides
+    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    artifact = result.stdout
+    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    provides = result.stdout
+
     # Generate a simple configuration artifact
     new_configuration = {"new-key": "new-value"}
     configuration_artifact = tempfile.NamedTemporaryFile(suffix=".mender", delete=False)
@@ -263,7 +287,7 @@ def test_mender_configure_failed_deployment_apply_fails(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender -install /data/configuration-artifact.mender",
+            "mender install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -289,6 +313,13 @@ def test_mender_configure_failed_deployment_apply_fails(
 
     device_config = json.loads(result.stdout)
     assert device_config == configuration
+
+    # capture the new artifact and provides and verify they didn't change
+    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    new_artifact = result.stdout
+    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    new_provides = result.stdout
+    assert (new_artifact, new_provides) == (artifact, provides)
 
 
 def test_mender_configure_managed_configuration(
