@@ -8,6 +8,12 @@ include:
     file: '.gitlab-ci-check-commits.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-check-license.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-python3-format.yml'
+
+variables:
+  MENDER_VERSION: master
+  MENDER_ARTIFACT_VERSION: master
 
 test:unit:
   stage: test
@@ -18,3 +24,39 @@ test:unit:
     - git submodule update --init --recursive
   script:
     - make test
+
+test:integration:
+  stage: test
+  needs: []
+  image: docker:19.03-dind
+  tags:
+    - mender-qa-slave
+  before_script:
+    # DinD setup in mender-qa-slave
+    - unset DOCKER_HOST
+    - unset DOCKER_TLS_VERIFY
+    - unset DOCKER_CERT_PATH
+    # Start dockerd in the background
+    - /usr/local/bin/dockerd &
+    # Wait for dockerd to start
+    - |-
+      MAX_WAIT=30
+      while [ ! -e "/var/run/docker.sock" ] && [ $MAX_WAIT -gt 0 ]; do
+        MAX_WAIT=$(($MAX_WAIT - 1))
+        sleep 1
+      done
+    # Verify that the docker server is up and running
+    - docker version
+    # Init the git submodules
+    - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
+    - git submodule update --init --recursive
+    # Install test dependencies
+    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements/apk-requirements.txt)
+    - pip install -r tests/integration/mender_integration/tests/requirements/python-requirements.txt
+    # Download and install mender-artifact
+    - curl -f -O https://mender.s3.amazonaws.com/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
+    - chmod ugo+x mender-artifact
+    - mv mender-artifact /usr/bin/
+  script:
+    - cd tests/integration/
+    - ./run.sh

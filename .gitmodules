@@ -1,3 +1,9 @@
 [submodule "tests/shunit2"]
 	path = tests/shunit2
 	url = https://github.com/kward/shunit2
+[submodule "tests/integration/mender_integration"]
+	path = tests/integration/mender_integration
+	url = https://github.com/mendersoftware/integration.git
+[submodule "tests/integration/mender_test_containers"]
+	path = tests/integration/mender_test_containers
+	url = https://github.com/mendersoftware/mender-test-containers.git

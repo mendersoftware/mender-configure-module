@@ -1,0 +1,5 @@
+venv
+mender-configure
+mender-image-full-cmdline-rofs-qemux86-64.uefiimg.ext4
+mender-inventory-mender-configure
+__pycache__
