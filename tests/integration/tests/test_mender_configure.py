@@ -245,8 +245,16 @@ def test_mender_configure_failed_install_config_is_a_folder(
 def test_mender_configure_failed_install_apply_fails(
     setup_test_container, setup_tester_ssh_connection
 ):
-    # Install a configuration apply script which fails
-    make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 2\n")
+    # Install a configuration apply script which fails in applying the new configuration
+    make_configuration_apply_script(
+        setup_tester_ssh_connection,
+        """#/bin/sh
+if grep -q new-key "$1"; then
+    exit 2
+fi
+exit 0
+""",
+    )
 
     # Install a pre-existing configuration
     configuration = {"key": "value"}
