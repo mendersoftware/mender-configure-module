@@ -291,9 +291,6 @@ def test_mender_configure_failed_deployment_apply_fails(
     assert device_config == configuration
 
 
-@pytest.mark.xfail(
-    reason="fails because it requires bug fixes in the deployments service"
-)
 def test_mender_configure_managed_configuration(
     standard_setup_one_rofs_configure_client,
 ):
