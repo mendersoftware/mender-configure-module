@@ -33,7 +33,7 @@ class MenderConfigureHandler(server.BaseHTTPRequestHandler):
         if http_log_path is None:
             http_log_path = "./http.log"
         with open(http_log_path, "a") as log:
-            log.write(f'Log: path = "{self.path}", auth_token = "{auth}"')
+            log.write(f'Log: path = "{self.path}", auth_token = "{auth}"\n')
 
         self.end_headers()
 
