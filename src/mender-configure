@@ -21,7 +21,7 @@ APPLY_CMD=${TEST_APPLY_CMD:-/usr/lib/mender-configure/apply-device-config}
 STATE="$1"
 FILES="$2"
 
-BACKUP="$FILES/device-config-backup.json"
+BACKUP="$FILES/tmp/device-config-backup.json"
 
 safe_copy() {
     if [ -n "$3" ]; then
@@ -48,9 +48,9 @@ case "$STATE" in
         RET=0
         "$APPLY_CMD" "$CONFIG" || RET=$?
         if [ $RET -eq 20 ]; then
-            touch "$FILES/needs-reboot"
-            sync "$FILES/needs-reboot"
-            sync "$FILES"
+            touch "$FILES/tmp/needs-reboot"
+            sync "$FILES/tmp/needs-reboot"
+            sync "$FILES/tmp"
             exit 0
         else
             exit $RET
@@ -58,7 +58,7 @@ case "$STATE" in
         ;;
 
     NeedsArtifactReboot)
-        if [ -e "$FILES/needs-reboot" ]; then
+        if [ -e "$FILES/tmp/needs-reboot" ]; then
             echo "Automatic"
         else
             echo "No"
@@ -75,9 +75,9 @@ case "$STATE" in
         RET=0
         "$APPLY_CMD" "$CONFIG" || RET=$?
         if [ $RET -eq 20 ]; then
-            touch "$FILES/needs-reboot"
-            sync "$FILES/needs-reboot"
-            sync "$FILES"
+            touch "$FILES/tmp/needs-reboot"
+            sync "$FILES/tmp/needs-reboot"
+            sync "$FILES/tmp"
             exit 0
         else
             exit $RET
