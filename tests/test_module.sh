@@ -4,13 +4,17 @@ test_dir="$(dirname $0)"
 tmp_dir="$(mktemp -d)"
 state_dir="$(mktemp -d)"
 module_dir="${state_dir}/module"
-applycmd_dir="$(mktemp -d)"
+applycmd_dir="$(mktemp -d)/apply-device-config.d"
+applycmd="${applycmd_dir}/apply-device-config"
 applycmd_log="${tmp_dir}/apply-device-config.log"
 mender_configure="${test_dir}/../src/mender-configure"
 
 # Override variables inside the Update Module.
 export TEST_CONFIG="${state_dir}/device-config.json"
-export TEST_APPLY_CMD="${applycmd_dir}/apply-device-config"
+export TEST_APPLY_DIR="${applycmd_dir}"
+
+# Makes it easier to do output matching.
+export QUIET=1
 
 setUp() {
     mkdir -p "${tmp_dir}"
@@ -18,12 +22,12 @@ setUp() {
     mkdir -p "${applycmd_dir}"
     mkdir -p "${module_dir}/tmp"
 
-    cat > "${TEST_APPLY_CMD}" <<EOF
+    cat > "${applycmd}" <<EOF
 #!/bin/sh
 
 echo "\$(basename "\$0")" "\$@" >> "${applycmd_log}"
 EOF
-    chmod ugo+x "${TEST_APPLY_CMD}"
+    chmod ugo+x "${applycmd}"
 
     mkdir -p "${module_dir}/header"
     cat > "${module_dir}/header/meta-data" <<EOF
@@ -65,7 +69,7 @@ testArtifactInstallConfigExists() {
 }
 
 testNeedsArtifactRebootAutomatic() {
-    echo 'exit 20' >> "${TEST_APPLY_CMD}"
+    echo 'exit 20' >> "${applycmd}"
 
     output="$(./$mender_configure ArtifactInstall "${module_dir}")"
     assertEquals 0 $?
@@ -141,7 +145,7 @@ apply-device-config ${TEST_CONFIG}" "$(cat "${applycmd_log}")"
 }
 
 testArtifactRollbackAndReboot() {
-    echo 'if [ "$TEST_ROLLBACK" = 1 ]; then exit 20; fi' >> "${TEST_APPLY_CMD}"
+    echo 'if [ "$TEST_ROLLBACK" = 1 ]; then exit 20; fi' >> "${applycmd}"
 
     output="$(./$mender_configure ArtifactInstall "${module_dir}")"
     assertEquals 0 $?
@@ -183,6 +187,54 @@ testRollbackNoOriginalConfiguration() {
 
     assertFalse "test -e ${TEST_CONFIG}"
     assertEquals "apply-device-config ${TEST_CONFIG}" "$(cat "${applycmd_log}")"
+}
+
+testMixedSuccessAndFailure() {
+    rm -f "${applycmd}"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/00"
+    printf '#!/bin/sh\nexit 3\n' > "${applycmd_dir}/01"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/02"
+    chmod ugo+x "${applycmd_dir}"/*
+
+    output="$(./$mender_configure ArtifactInstall "${module_dir}")"
+    assertEquals 3 $?
+    assertEquals "" "${output}"
+}
+
+testMixedSuccessAndReboot() {
+    rm -f "${applycmd}"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/00"
+    printf '#!/bin/sh\nexit 20\n' > "${applycmd_dir}/01"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/02"
+    chmod ugo+x "${applycmd_dir}"/*
+
+    output="$(./$mender_configure ArtifactInstall "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+}
+
+testMixedFailureAndReboot() {
+    rm -f "${applycmd}"
+    printf '#!/bin/sh\nexit 3\n' > "${applycmd_dir}/00"
+    printf '#!/bin/sh\nexit 20\n' > "${applycmd_dir}/01"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/02"
+    chmod ugo+x "${applycmd_dir}"/*
+
+    output="$(./$mender_configure ArtifactInstall "${module_dir}")"
+    assertEquals 3 $?
+    assertEquals "" "${output}"
+}
+
+testMixedFailureAndReboot2() {
+    rm -f "${applycmd}"
+    printf '#!/bin/sh\nexit 20\n' > "${applycmd_dir}/00"
+    printf '#!/bin/sh\nexit 3\n' > "${applycmd_dir}/01"
+    printf '#!/bin/sh\nexit 0\n' > "${applycmd_dir}/02"
+    chmod ugo+x "${applycmd_dir}"/*
+
+    output="$(./$mender_configure ArtifactInstall "${module_dir}")"
+    assertEquals 3 $?
+    assertEquals "" "${output}"
 }
 
 

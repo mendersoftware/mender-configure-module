@@ -16,10 +16,13 @@
 set -e
 
 CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
-APPLY_CMD=${TEST_APPLY_CMD:-/usr/lib/mender-configure/apply-device-config}
+APPLY_DIR=${TEST_APPLY_DIR:-/usr/lib/mender-configure/apply-device-config.d}
 
 STATE="$1"
 FILES="$2"
+
+# Primarily used by tests, but can be enabled by anyone.
+QUIET=${QUIET:-0}
 
 BACKUP="$FILES/tmp/device-config-backup.json"
 
@@ -32,6 +35,32 @@ safe_copy() {
     sync "$2".tmp
     mv "$2".tmp "$2"
     sync "$(dirname "$2")"
+}
+
+apply_scripts() {
+    global_return_code=0
+    for script in "$APPLY_DIR"/*; do
+        if [ "$script" = "$APPLY_DIR/*" ]; then
+            # No files present, glob failed and returned verbatim '*'.
+            exit 0
+        fi
+
+        if [ "$QUIET" = 0 ]; then
+            echo "Executing $script"
+        fi
+        return_code=0
+        "$script" "$CONFIG" || return_code=$?
+        if [ $return_code -ne 0 ]; then
+            # Set the overall return code, but prioritize real errors over
+            # "reboot return code" (20).
+            if [ $return_code -ne 20 ] || [ $global_return_code -eq 0 ]; then
+                global_return_code=$return_code
+            fi
+            echo "Script \"$script\" returned exit code $return_code." 1>&2
+        fi
+    done
+
+    return $global_return_code
 }
 
 case "$STATE" in
@@ -50,7 +79,7 @@ case "$STATE" in
         fi
         safe_copy "$FILES/header/meta-data" "$CONFIG"
         RET=0
-        "$APPLY_CMD" "$CONFIG" || RET=$?
+        apply_scripts || RET=$?
         if [ $RET -eq 20 ]; then
             touch "$FILES/tmp/needs-reboot"
             sync "$FILES/tmp/needs-reboot"
@@ -82,7 +111,7 @@ case "$STATE" in
         fi
         safe_copy "$BACKUP" "$CONFIG"
         RET=0
-        "$APPLY_CMD" "$CONFIG" || RET=$?
+        apply_scripts || RET=$?
         if [ $RET -eq 20 ]; then
             touch "$FILES/tmp/needs-reboot"
             sync "$FILES/tmp/needs-reboot"

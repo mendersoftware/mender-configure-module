@@ -62,17 +62,18 @@ def make_configuration_apply_script(setup_tester_ssh_connection, script):
 
     try:
         run(
-            setup_tester_ssh_connection, "mkdir -p /usr/lib/mender-configure",
+            setup_tester_ssh_connection,
+            "mkdir -p /usr/lib/mender-configure/apply-device-config.d",
         )
         put(
             setup_tester_ssh_connection,
             tf.name,
             key_filename=tf.name,
-            remote_path="/usr/lib/mender-configure/apply-device-config",
+            remote_path="/usr/lib/mender-configure/apply-device-config.d/integration-test",
         )
         run(
             setup_tester_ssh_connection,
-            "chmod 755 /usr/lib/mender-configure/apply-device-config",
+            "chmod 755 /usr/lib/mender-configure/apply-device-config.d/integration-test",
         )
     finally:
         os.unlink(tf.name)
