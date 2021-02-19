@@ -10,7 +10,7 @@ build:
 check: test
 
 test:
-	$(MAKE) -C tests test
+	$(MAKE) -C tests/unit test
 
 install: install-bin install-systemd
 

@@ -7,7 +7,7 @@ module_dir="${state_dir}/module"
 applycmd_dir="$(mktemp -d)/apply-device-config.d"
 applycmd="${applycmd_dir}/apply-device-config"
 applycmd_log="${tmp_dir}/apply-device-config.log"
-mender_configure="${test_dir}/../src/mender-configure"
+mender_configure="${test_dir}/../../src/mender-configure"
 
 # Override variables inside the Update Module.
 export TEST_CONFIG="${state_dir}/device-config.json"
