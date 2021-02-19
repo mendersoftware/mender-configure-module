@@ -43,6 +43,10 @@ case "$STATE" in
     ArtifactInstall)
         if [ -e "$CONFIG" ]; then
             safe_copy "$CONFIG" "$BACKUP"
+        else
+            touch "$FILES/tmp/no-original"
+            sync "$FILES/tmp/no-original"
+            sync "$FILES/tmp"
         fi
         safe_copy "$FILES/header/meta-data" "$CONFIG"
         RET=0
@@ -66,9 +70,14 @@ case "$STATE" in
         ;;
 
     ArtifactRollback)
-        if ! [ -e "$BACKUP" ]; then
-            # Either there was no preexisting configuration, or the update was
-            # interrupted before we could make a backup: Nothing to do.
+        if [ -e "$FILES/tmp/no-original" ]; then
+            # There was no preexisting configuration. Nothing to restore.
+            rm -f "$CONFIG"
+            sync "$(dirname "$CONFIG")"
+            exit 0
+        elif ! [ -e "$BACKUP" ]; then
+            # The update was interrupted before we could make a backup: Nothing
+            # to do.
             exit 0
         fi
         safe_copy "$BACKUP" "$CONFIG"

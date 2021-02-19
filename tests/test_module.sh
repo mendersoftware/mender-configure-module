@@ -16,7 +16,7 @@ setUp() {
     mkdir -p "${tmp_dir}"
     mkdir -p "${state_dir}"
     mkdir -p "${applycmd_dir}"
-    mkdir -p "${module_dir}"
+    mkdir -p "${module_dir}/tmp"
 
     cat > "${TEST_APPLY_CMD}" <<EOF
 #!/bin/sh
@@ -164,6 +164,25 @@ testArtifactRollbackAndReboot() {
     assertEquals '{"old":"value"}' "$(cat "${TEST_CONFIG}")"
     assertEquals "apply-device-config ${TEST_CONFIG}
 apply-device-config ${TEST_CONFIG}" "$(cat "${applycmd_log}")"
+}
+
+testRollbackNoOriginalConfiguration() {
+    rm -f "${TEST_CONFIG}"
+
+    output="$(./$mender_configure SupportsRollback "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "Yes" "${output}"
+
+    output="$(./$mender_configure ArtifactInstall "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+
+    output="$(./$mender_configure ArtifactRollback "${module_dir}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+
+    assertFalse "test -e ${TEST_CONFIG}"
+    assertEquals "apply-device-config ${TEST_CONFIG}" "$(cat "${applycmd_log}")"
 }
 
 
