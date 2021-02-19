@@ -65,6 +65,11 @@ apply_scripts() {
 
 case "$STATE" in
 
+    --apply-only)
+        # Special mode when called during startup.
+        apply_scripts
+        ;;
+
     SupportsRollback)
         echo "Yes"
         ;;
