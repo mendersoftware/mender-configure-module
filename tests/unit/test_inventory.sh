@@ -3,7 +3,7 @@
 test_dir="$(dirname $0)"
 tmp_dir="$(mktemp -d)"
 state_dir="$(mktemp -d)"
-inv_script="${test_dir}/../src/mender-inventory-mender-configure"
+inv_script="${test_dir}/../../src/mender-inventory-mender-configure"
 
 # Override variables inside the inventory script.
 export TEST_CONFIG="${state_dir}/device-config.json"

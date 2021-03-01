@@ -1,0 +1,86 @@
+#!/bin/sh
+# Copyright 2021 Northern.tech AS
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http:#www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+# Script which configures the led of the Raspberry Pi device, according to the
+# "mender-demo-raspberrypi-led" key, given in the file in the first argument.
+
+LED=/sys/class/leds/led0/trigger
+LED_BRIGHTNESS=/sys/class/leds/led0/brightness
+
+if [ $# -ne 1 ]; then
+    echo "Must be invoked with exactly one argument: The JSON configuration." 1>&2
+    exit 2
+fi
+
+CONFIG="$1"
+
+if ! [ -e "$CONFIG" ]; then
+    echo "Error: $CONFIG does not exist." 1>&2
+    exit 1
+fi
+
+LED_CONF="$(jq -r -e '."mender-demo-raspberrypi-led"' < "$CONFIG")"
+
+return_code=$?
+case $return_code in
+    0)
+        # Success, continue below.
+        :
+        ;;
+    1)
+        # Result was null, there is no led configuration, nothing to do.
+        echo "No mender-demo-raspberrypi-led configuration found."
+        exit 0
+        ;;
+    *)
+        exit $return_code
+        ;;
+esac
+
+case "$LED_CONF" in
+    on)
+        # Special case.
+        LED_CONF=gpio
+        LED_CONF_BRIGHTNESS=1
+        ;;
+    off)
+        # Special case.
+        LED_CONF=gpio
+        LED_CONF_BRIGHTNESS=0
+        ;;
+    *)
+        LED_CONF_BRIGHTNESS=1
+        ;;
+esac
+
+if ! [ -e "$LED" ]; then
+    echo "$LED does not exist. Cannot apply LED configuration." 1>&2
+    exit 1
+fi
+
+return_code=0
+echo "$LED_CONF" > "$LED" || return_code=$?
+echo "$LED_CONF_BRIGHTNESS" > "$LED_BRIGHTNESS" || return_code=$?
+if [ $return_code -ne 0 ]; then
+    cat 1>&2 <<EOF
+Applying the led configuration returned $return_code. Invalid configuration?
+The available choices are:
+EOF
+    # Our own choices, just shortcuts.
+    echo -n "on off "
+    cat "$LED" 1>&2
+fi
+
+exit $return_code

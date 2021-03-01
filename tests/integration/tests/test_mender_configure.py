@@ -177,7 +177,7 @@ def test_mender_configure_successful_install_needs_reboot(
     # Verify the needs-reboot file
     result = run(
         setup_tester_ssh_connection,
-        "ls /data/mender/modules/v3/payloads/0000/tree/needs-reboot",
+        "ls /data/mender/modules/v3/payloads/0000/tree/tmp/needs-reboot",
         warn=True,
     )
     logging.debug(result)

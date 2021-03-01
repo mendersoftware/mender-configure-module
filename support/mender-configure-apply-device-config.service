@@ -1,0 +1,10 @@
+[Unit]
+Description=Mender-configure device configuration
+After=data.mount
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/mender/modules/v3/mender-configure --apply-only
