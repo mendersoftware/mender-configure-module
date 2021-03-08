@@ -7,22 +7,14 @@ Mender is an open source over-the-air (OTA) software updater for embedded Linux
 devices. Mender comprises a client running at the embedded device, as well as
 a server that manages deployments across many devices.
 
-This repository contains the artifacts library, which is used by the
-Mender client, command line interface, server and for build integration with the Yocto Project.
-
-The artifacts library makes it easy to programmatically work with a Mender artifact, which
-is a file that can be recognized by its `.mender` suffix. Mender artifacts
-can contain binaries, metadata, checksums, signatures and scripts that are
-used during a deployment. The artifact format acts as a wrapper, and
-uses the `tar` format to bundle several files into one.
-
-In its simplest form, an artifact contains just a rootfs image,
-along with its checksum, id and device type compatibility.
-
-
-The artifacts library might also be useful for other updaters or
-purposes. We are always happy to see other uses of it!
-
+This repository contains an update module for applying configuration to a device.
+The mender-configure module accepts artifacts of `mender-configure` type.
+On each configuration update, mender-configure module executes all the scripts
+from the scripts directory (defaults to /usr/lib/mender-configure/apply-device-config.d).
+The update module executes each script with a path to the configuration file passed
+as an argument and checks the exit code of the script. Return code 20 is interpreted
+as success-but-reboot-needed.
+The module also supports rollback.
 
 ![Mender logo](https://mender.io/user/pages/04.resources/logos/logoS.png)
 
