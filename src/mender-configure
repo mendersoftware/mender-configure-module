@@ -26,6 +26,12 @@ QUIET=${QUIET:-0}
 
 BACKUP="$FILES/tmp/device-config-backup.json"
 
+# create the configuration directory if it doesn't exist
+CONFIG_DIR=$(dirname "$CONFIG")
+if ! [ -d "$CONFIG_DIR" ]; then
+    mkdir -p "$CONFIG_DIR"
+fi
+
 safe_copy() {
     if [ -n "$3" ]; then
         echo "safe_copy can only handle one file copy at a time" 1>&2
