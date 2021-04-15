@@ -190,6 +190,12 @@ def test_mender_configure_failed_install_config_is_a_folder(
     # Install a no-op configuration apply script
     make_configuration_apply_script(setup_tester_ssh_connection, "#/bin/sh\nexit 0\n")
 
+    # Remove the configuration file if it exists
+    run(
+        setup_tester_ssh_connection,
+        "rm -f /var/lib/mender-configure/device-config.json",
+    )
+
     # Lock the configuration file with a folder
     run(
         setup_tester_ssh_connection,
