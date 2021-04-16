@@ -21,6 +21,7 @@ from mender_test_containers.helpers import run, put
 
 def test_timezone_script(setup_test_container, setup_tester_ssh_connection):
     run(setup_tester_ssh_connection, "mount / -o remount,rw")
+    run(setup_tester_ssh_connection, "systemctl restart systemd-timedated")
 
     try:
         run(
@@ -64,5 +65,5 @@ def test_timezone_script(setup_test_container, setup_tester_ssh_connection):
         assert abs(int(new_hour) - int(old_hour)) > 5
 
     finally:
-        run(setup_tester_ssh_connection, "timedatectl set-timezone UTC")
+        run(setup_tester_ssh_connection, "timedatectl set-timezone UTC || true")
         run(setup_tester_ssh_connection, "mount / -o remount,ro")
