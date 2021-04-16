@@ -62,6 +62,21 @@ test:integration:
     - cd tests/integration/
     - ./run.sh
 
+trigger:mender-dist-packages:
+  image: alpine
+  stage: trigger
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - curl -v -f -X POST
+      -F token=$MENDER_DIST_PACKAGES_TRIGGER_TOKEN
+      -F ref=master
+      -F variables[MENDER_CONFIGURE_VERSION]=$CI_COMMIT_REF_NAME
+      https://gitlab.com/api/v4/projects/14968223/trigger/pipeline
+  only:
+    - tags
+    - master
+
 trigger:integration:
   image: alpine
   stage: trigger

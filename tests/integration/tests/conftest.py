@@ -31,6 +31,7 @@ from mender_integration.testutils.infra.device import MenderDevice
 from mender_integration.tests.MenderAPI import devauth, reset_mender_api
 from mender_test_containers.conftest import *
 from mender_test_containers.container_props import *
+from mender_integration.tests.conftest import pytest_exception_interact
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
