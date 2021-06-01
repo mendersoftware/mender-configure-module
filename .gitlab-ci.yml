@@ -19,9 +19,9 @@ variables:
 test:unit:
   stage: test
   needs: []
-  image: alpine:latest
+  image: python:alpine
   before_script:
-    - apk add --update git make curl python3
+    - apk add --update git make curl
     - git submodule update --init --recursive
   script:
     - make test
