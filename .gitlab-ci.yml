@@ -66,7 +66,6 @@ test:integration:
 trigger:mender-dist-packages:
   stage: trigger
   rules:
-    - if: $CI_COMMIT_TAG
     - if: '$CI_COMMIT_BRANCH == "master"'
   trigger:
     project: Northern.tech/Mender/mender-dist-packages
