@@ -122,6 +122,17 @@ Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer T
     # But no third report.
     assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
 Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
+
+    # Change the auth token
+    export TEST_AUTH_TOKEN="ThisIsAnotherAuthToken"
+
+    output="$("${inv_script}")"
+    assertEquals 0 $?
+    assertEquals "" "${output}"
+    # Now there should be a third report.
+    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
+Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
+Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnotherAuthToken"' "$(cat "$TEST_HTTP_LOG")"
 }
 
 
