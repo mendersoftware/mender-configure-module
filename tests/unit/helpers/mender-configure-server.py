@@ -23,7 +23,7 @@ class MenderConfigureHandler(server.BaseHTTPRequestHandler):
 
         if self.path != "/api/devices/v1/deviceconfig/configuration":
             response = 404
-        elif auth != "Bearer ThisIsAnAuthToken":
+        elif auth not in ("Bearer ThisIsAnAuthToken", "Bearer ThisIsAnotherAuthToken"):
             response = 401
         else:
             response = 204

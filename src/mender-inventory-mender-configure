@@ -29,13 +29,6 @@ if ! [ -f "$CONFIG" ]; then
     exit 0
 fi
 
-COMPUTED_CHECKSUM="$(cat "$CONFIG" | sha256sum -)"
-
-if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSUM")" ]; then
-    # If checksum hasn't changed since previous report, exit silently.
-    exit 0
-fi
-
 # Fetch Authentication token and server from Mender Auth Manager.
 DBUS_REPLY="$(dbus-send \
                         --system \
@@ -55,6 +48,16 @@ fi
 if [ -z "$SERVER" ]; then
     echo "A server address could not be obtained over DBus."
     exit 1
+fi
+
+# Include the JWT token in the checksum to report again the
+# configuration to the server in case of new authorization after
+# device decommissioning or connection to a different Mender server
+COMPUTED_CHECKSUM="$( (echo "$AUTH_TOKEN"; cat "$CONFIG") | sha256sum -)"
+
+# If checksum hasn't changed since previous report, exit silently.
+if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSUM")" ]; then
+    exit 0
 fi
 
 # Do the report.
