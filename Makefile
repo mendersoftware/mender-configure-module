@@ -1,4 +1,4 @@
-DESTDIR ?= /
+DESTDIR ?=
 moduledir ?= $(DESTDIR)/usr/share/mender/modules/v3
 inventorydir ?= $(DESTDIR)/usr/share/mender/inventory
 scriptdir ?= $(DESTDIR)/usr/lib/mender-configure/apply-device-config.d
