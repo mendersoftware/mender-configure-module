@@ -62,6 +62,8 @@ fi
 
 # Do the report.
 curl \
+    -s \
+    -S \
     -Lf \
     -X PUT \
     -H "Authorization: Bearer ${AUTH_TOKEN}" \
