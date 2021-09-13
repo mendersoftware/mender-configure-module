@@ -61,7 +61,12 @@ test:integration:
     - mv mender-artifact /usr/bin/
   script:
     - cd tests/integration/
-    - ./run.sh
+    - GENERATE_PYTEST_REPORT=true ./run.sh
+  artifacts:
+    expire_in: 2w
+    when: always
+    reports:
+      junit: ${CI_PROJECT_DIR}/tests/integration/report.xml
 
 trigger:mender-dist-packages:
   stage: trigger
