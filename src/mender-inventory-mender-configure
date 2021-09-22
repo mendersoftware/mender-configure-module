@@ -60,7 +60,10 @@ if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSU
     exit 0
 fi
 
+CAPTURED_CURL_OUTPUT=$(mktemp)
 # Do the report.
+set +e
+{
 curl \
     -s \
     -S \
@@ -70,6 +73,15 @@ curl \
     -H "Content-Type: application/json" \
     -d "@${CONFIG}" \
     "${SERVER}/${CONFIG_ENDPOINT}"
+} > ${CAPTURED_CURL_OUTPUT} 2>&1
+ret=$?
+set -e
+
+cat ${CAPTURED_CURL_OUTPUT}
+rm -f ${CAPTURED_CURL_OUTPUT}
+if [ ${ret} -ne 0 ]; then
+    exit ${ret}
+fi
 
 # Update checksum atomically.
 echo "$COMPUTED_CHECKSUM" > "$CONFIG_CHECKSUM.tmp"
