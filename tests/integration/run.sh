@@ -26,4 +26,4 @@ docker run --rm --entrypoint cp -v $PWD:/output \
     /output
 
 # Run tests
-python3 -m pytest -v tests/ "$@"
+python3 -m pytest ${GENERATE_PYTEST_REPORT:+--junitxml=report.xml} -v tests/ "$@"

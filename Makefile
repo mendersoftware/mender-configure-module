@@ -15,6 +15,7 @@ test:
 install: install-bin install-systemd
 
 install-bin:
+	install -d -m 755 $(scriptdir)
 	install -d -m 755 $(moduledir)
 	install -m 755 src/mender-configure $(moduledir)/
 
