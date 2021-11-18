@@ -73,6 +73,8 @@ trigger:mender-dist-packages:
   rules:
     - if: $CI_COMMIT_TAG
     - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
   variables:
     MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
     PUBLISH_MENDER_DIST_PACKAGES_AUTOMATIC: "true"
@@ -85,6 +87,8 @@ trigger:integration:
   stage: trigger
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
   trigger:
     project: Northern.tech/Mender/integration
     branch: master
