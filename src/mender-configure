@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2021 Northern.tech AS
+# Copyright 2022 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ set -e
 
 CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
 APPLY_DIR=${TEST_APPLY_DIR:-/usr/lib/mender-configure/apply-device-config.d}
+DEFAULT_PERMISSIONS="0600"
 
 STATE="$1"
 FILES="$2"
@@ -37,7 +38,9 @@ safe_copy() {
         echo "safe_copy can only handle one file copy at a time" 1>&2
         exit 2
     fi
-    cp "$1" "$2".tmp
+    touch "$2".tmp
+    chmod $DEFAULT_PERMISSIONS "$2".tmp
+    cat "$1" > "$2".tmp
     sync "$2".tmp
     mv "$2".tmp "$2"
     sync "$(dirname "$2")"
