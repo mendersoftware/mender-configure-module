@@ -63,7 +63,6 @@ test:integration:
     - ./run.sh
 
 trigger:mender-dist-packages:
-  image: alpine
   stage: trigger
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
