@@ -13,7 +13,7 @@ include:
     file: '.gitlab-ci-check-python3-format.yml'
 
 variables:
-  MENDER_VERSION: mender-3.2.x
+  MENDER_VERSION: mender-3.3.x
   MENDER_ARTIFACT_VERSION: 3.7.x
 
 test:unit:
