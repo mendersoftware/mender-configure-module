@@ -1,4 +1,4 @@
-# Copyright 2021 Northern.tech AS
+# Copyright 2022 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -83,10 +83,6 @@ class DockerComposeStandardSetupOneConfigureRofsClient(
     ):
         compose_files = docker_compose_manager.DockerComposeNamespace.QEMU_CLIENT_FILES
         compose_files += [
-            path.join(
-                path.dirname(__file__),
-                "../mender_integration/docker-compose.config.yml",
-            ),
             path.join(path.dirname(__file__), extra_compose_file),
         ]
         docker_compose_manager.DockerComposeNamespace.__init__(
