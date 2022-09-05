@@ -56,7 +56,7 @@ test:integration:
     - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements/apk-requirements.txt)
     - pip install -r tests/integration/mender_integration/tests/requirements/python-requirements.txt
     # Download and install mender-artifact
-    - curl -f -O https://mender.s3.amazonaws.com/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
+    - curl -f -O https://downloads.mender.io/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
     - chmod ugo+x mender-artifact
     - mv mender-artifact /usr/bin/
   script:
