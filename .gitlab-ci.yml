@@ -32,9 +32,9 @@ test:integration:
   needs: []
   image: docker:dind
   tags:
-    - mender-qa-slave
+    - mender-qa-worker-backend-integration-tests
   before_script:
-    # DinD setup in mender-qa-slave
+    # DinD setup in Mender CI runners
     - unset DOCKER_HOST
     - unset DOCKER_TLS_VERIFY
     - unset DOCKER_CERT_PATH
