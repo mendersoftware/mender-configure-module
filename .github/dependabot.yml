@@ -2,19 +2,7 @@ version: 2
 updates:
   - commit-message:
       prefix: "chore"
-    directory: /tests/unit/shunit2
-    package-ecosystem: gitsubmodule
-    schedule:
-      interval: monthly
-  - commit-message:
-      prefix: "chore"
-    directory: /tests/integration/mender_integration
-    package-ecosystem: gitsubmodule
-    schedule:
-      interval: monthly
-  - commit-message:
-      prefix: "chore"
-    directory: /tests/integration/mender_test_containers
+    directory: /
     package-ecosystem: gitsubmodule
     schedule:
       interval: monthly
