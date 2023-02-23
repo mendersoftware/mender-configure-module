@@ -68,22 +68,6 @@ test:integration:
     reports:
       junit: ${CI_PROJECT_DIR}/tests/integration/report.xml
 
-trigger:mender-dist-packages:
-  stage: trigger
-  inherit:
-    variables: false
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-  variables:
-    MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
-    PUBLISH_MENDER_DIST_PACKAGES_AUTOMATIC: "true"
-  trigger:
-    project: Northern.tech/Mender/mender-dist-packages
-    branch: master
-    strategy: depend
-
 trigger:integration:
   stage: trigger
   inherit:
