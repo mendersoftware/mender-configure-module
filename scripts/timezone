@@ -32,7 +32,13 @@ TIMEZONE="$(jq -r -e .timezone < "$CONFIG")"
 return_code=$?
 case $return_code in
     0)
-        timedatectl set-timezone "$TIMEZONE"
+        # Add new timezone
+        echo $TIMEZONE >/etc/timezone
+        # Remove existing symlink between localtime and timezone definition
+        rm /etc/localtime
+        # Reload local time as per /etc/timezone file and
+        # create a symlink to a new timezone definition
+        dpkg-reconfigure -f noninteractive tzdata
         exit $?
         ;;
     1)
