@@ -31,8 +31,8 @@ install-scripts:
 	install -m 755 scripts/timezone $(scriptdir)/
 
 install-systemd:
-	install -d -m 755 $(DESTDIR)/lib/systemd/system
-	install -m 644 support/mender-configure-apply-device-config.service $(DESTDIR)/lib/systemd/system/
+	install -d -m 755 $(DESTDIR)/usr/lib/systemd/system
+	install -m 644 support/mender-configure-apply-device-config.service $(DESTDIR)/usr/lib/systemd/system/
 
 uninstall: uninstall-bin uninstall-systemd
 
@@ -52,8 +52,8 @@ uninstall-scripts:
 	rmdir -p --ignore-fail-on-non-empty $(scriptdir)
 
 uninstall-systemd:
-	rm -f $(DESTDIR)/lib/systemd/system/mender-configure-apply-device-config.service
-	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)/lib/systemd/system
+	rm -f $(DESTDIR)/usr/lib/systemd/system/mender-configure-apply-device-config.service
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)/usr/lib/systemd/system
 
 .PHONY: build
 .PHONY: check
