@@ -1,7 +1,9 @@
 DESTDIR ?= /
-moduledir ?= $(DESTDIR)/usr/share/mender/modules/v3
-inventorydir ?= $(DESTDIR)/usr/share/mender/inventory
-scriptdir ?= $(DESTDIR)/usr/lib/mender-configure/apply-device-config.d
+prefix ?= $(DESTDIR)
+moduledir ?= /usr/share/mender/modules/v3
+inventorydir ?= /usr/share/mender/inventory
+scriptdir ?= /usr/lib/mender-configure/apply-device-config.d
+systemd_unitdir ?= /lib/systemd
 
 # No-op for this project
 build:
@@ -15,45 +17,45 @@ test:
 install: install-bin install-systemd
 
 install-bin:
-	install -d -m 755 $(scriptdir)
-	install -d -m 755 $(moduledir)
-	install -m 755 src/mender-configure $(moduledir)/
+	install -d -m 755 $(prefix)$(scriptdir)
+	install -d -m 755 $(prefix)$(moduledir)
+	install -m 755 src/mender-configure $(prefix)$(moduledir)/
 
-	install -d -m 755 $(inventorydir)
-	install -m 755 src/mender-inventory-mender-configure $(inventorydir)/
+	install -d -m 755 $(prefix)$(inventorydir)
+	install -m 755 src/mender-inventory-mender-configure $(prefix)$(inventorydir)/
 
 install-demo:
-	install -d -m 755 $(scriptdir)
-	install -m 755 demo/mender-demo-raspberrypi-led $(scriptdir)/
+	install -d -m 755 $(prefix)$(scriptdir)
+	install -m 755 demo/mender-demo-raspberrypi-led $(prefix)$(scriptdir)/
 
 install-scripts:
-	install -d -m 755 $(scriptdir)
-	install -m 755 scripts/timezone $(scriptdir)/
+	install -d -m 755 $(prefix)$(scriptdir)
+	install -m 755 scripts/timezone $(prefix)$(scriptdir)/
 
 install-systemd:
-	install -d -m 755 $(DESTDIR)/lib/systemd/system
-	install -m 644 support/mender-configure-apply-device-config.service $(DESTDIR)/lib/systemd/system/
+	install -m 755 -d $(prefix)$(systemd_unitdir)/system
+	install -m 644 support/mender-configure-apply-device-config.service $(prefix)$(systemd_unitdir)/system/
 
 uninstall: uninstall-bin uninstall-systemd
 
 uninstall-bin:
-	rm -f $(moduledir)/mender-configure
-	rmdir -p --ignore-fail-on-non-empty $(moduledir)
+	rm -f $(prefix)$(moduledir)/mender-configure
+	rmdir -p --ignore-fail-on-non-empty $(prefix)$(moduledir)
 
-	rm -f $(inventorydir)/mender-inventory-mender-configure
-	rmdir -p --ignore-fail-on-non-empty $(inventorydir)
+	rm -f $(prefix)$(inventorydir)/mender-inventory-mender-configure
+	rmdir -p --ignore-fail-on-non-empty $(prefix)$(inventorydir)
 
 uninstall-demo:
-	rm -f $(scriptdir)/mender-demo-raspberrypi-led
-	rmdir -p --ignore-fail-on-non-empty $(scriptdir)
+	rm -f $(prefix)$(scriptdir)/mender-demo-raspberrypi-led
+	rmdir -p --ignore-fail-on-non-empty $(prefix)$(scriptdir)
 
 uninstall-scripts:
-	rm -f $(scriptdir)/timezone
-	rmdir -p --ignore-fail-on-non-empty $(scriptdir)
+	rm -f $(prefix)$(scriptdir)/timezone
+	rmdir -p --ignore-fail-on-non-empty $(prefix)$(scriptdir)
 
 uninstall-systemd:
-	rm -f $(DESTDIR)/lib/systemd/system/mender-configure-apply-device-config.service
-	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)/lib/systemd/system
+	rm -f $(prefix)$(systemd_unitdir)/system/mender-configure-apply-device-config.service
+	rmdir -p --ignore-fail-on-non-empty $(prefix)$(systemd_unitdir)/system
 
 .PHONY: build
 .PHONY: check
