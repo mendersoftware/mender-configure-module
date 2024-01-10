@@ -1,4 +1,4 @@
-ARG MENDER_VERSION=master
+ARG MENDER_VERSION=mender-master
 FROM mendersoftware/mender-client-qemu-rofs:${MENDER_VERSION}
 
 ARG MENDER_CONFIGURE_LOCATION=mender-configure
