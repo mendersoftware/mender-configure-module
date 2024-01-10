@@ -11,7 +11,7 @@ include:
       - '.gitlab-ci-check-python3-format.yml'
 
 variables:
-  MENDER_VERSION: master
+  MENDER_VERSION: mender-master
   MENDER_ARTIFACT_VERSION: master
   MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
 
