@@ -17,7 +17,7 @@ set -x -e
 
 MENDER_CONFIGURE=${MENDER_CONFIGURE:-../../src/mender-configure}
 MENDER_INVENTORY_MENDER_CONFIGURE=${MENDER_INVENTORY_MENDER_CONFIGURE:-../../src/mender-inventory-mender-configure}
-MENDER_VERSION=${MENDER_VERSION:-master}
+MENDER_VERSION=${MENDER_VERSION:-mender-master}
 
 # Generate docker-compose.testing.yml like integration's run.sh
 cat mender_integration/docker-compose.demo.yml > mender_integration/docker-compose.testing.yml

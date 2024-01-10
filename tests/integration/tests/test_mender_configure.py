@@ -57,7 +57,7 @@ def test_mender_configure_successful_install(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender install /data/configuration-artifact.mender",
+            "mender-update install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -78,7 +78,7 @@ def test_mender_configure_successful_install(
     assert device_config == configuration
 
     # commit the installation
-    result = run(setup_tester_ssh_connection, "mender commit", warn=True,)
+    result = run(setup_tester_ssh_connection, "mender-update commit", warn=True,)
     logging.debug(result)
     assert result.exited == 0
 
@@ -102,7 +102,7 @@ def test_mender_configure_successful_install(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender install /data/new-configuration-artifact.mender",
+            "mender-update install /data/new-configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -149,7 +149,7 @@ def test_mender_configure_successful_install_needs_reboot(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender install /data/configuration-artifact.mender",
+            "mender-update install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
@@ -203,9 +203,13 @@ def test_mender_configure_failed_install_config_is_a_folder(
     )
 
     # capture artifact and provides
-    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+    )
     artifact = result.stdout
-    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+    )
     provides = result.stdout
 
     # Generate a simple configuration artifact
@@ -228,22 +232,23 @@ def test_mender_configure_failed_install_config_is_a_folder(
 
         result = run(
             setup_tester_ssh_connection,
-            "mender install /data/configuration-artifact.mender",
+            "mender-update install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
         assert result.exited != 0
-        assert (
-            "Installation failed: Update module terminated abnormally: exit status 1"
-            in result.stderr
-        )
+        assert "ArtifactInstall: Process exited with status 1" in result.stderr
     finally:
         os.unlink(configuration_artifact_name)
 
     # capture the new artifact and provides and verify they didn't change
-    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+    )
     new_artifact = result.stdout
-    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+    )
     new_provides = result.stdout
     assert (new_artifact, new_provides) == (artifact, provides)
 
@@ -276,9 +281,13 @@ exit 0
     os.unlink(configuration_file_name)
 
     # capture artifact and provides
-    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+    )
     artifact = result.stdout
-    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+    )
     provides = result.stdout
 
     # Generate a simple configuration artifact
@@ -301,15 +310,12 @@ exit 0
 
         result = run(
             setup_tester_ssh_connection,
-            "mender install /data/configuration-artifact.mender",
+            "mender-update install /data/configuration-artifact.mender",
             warn=True,
         )
         logging.debug(result)
         assert result.exited != 0
-        assert (
-            "Installation failed: Update module terminated abnormally: exit status 2"
-            in result.stderr
-        )
+        assert "ArtifactInstall: Process exited with status 2" in result.stderr
     finally:
         os.unlink(configuration_artifact_name)
 
@@ -329,9 +335,13 @@ exit 0
     assert device_config == configuration
 
     # capture the new artifact and provides and verify they didn't change
-    result = run(setup_tester_ssh_connection, "mender show-artifact 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+    )
     new_artifact = result.stdout
-    result = run(setup_tester_ssh_connection, "mender show-provides 2>/dev/null",)
+    result = run(
+        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+    )
     new_provides = result.stdout
     assert (new_artifact, new_provides) == (artifact, provides)
 
