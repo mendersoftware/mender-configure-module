@@ -13,8 +13,8 @@ include:
     file: '.gitlab-ci-check-python3-format.yml'
 
 variables:
-  MENDER_VERSION: master
-  MENDER_ARTIFACT_VERSION: master
+  MENDER_VERSION: mender-3.7.x
+  MENDER_ARTIFACT_VERSION: 3.11.x
   MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
 
 test:unit:
@@ -53,8 +53,9 @@ test:integration:
     - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
     - git submodule update --init --recursive
     # Install test dependencies
-    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements/apk-requirements.txt)
-    - pip install -r tests/integration/mender_integration/tests/requirements/python-requirements.txt
+    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
+    - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
+
     # Download and install mender-artifact
     - curl -f -O https://downloads.mender.io/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
     - chmod ugo+x mender-artifact
