@@ -6,5 +6,9 @@ updates:
     package-ecosystem: gitsubmodule
     schedule:
       interval: monthly
+    groups:
+      gitsubmodule-dependencies:
+        patterns:
+          - "*"
     reviewers:
       - "mendersoftware/client-dependabot-reviewers"
