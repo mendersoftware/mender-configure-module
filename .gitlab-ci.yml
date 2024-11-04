@@ -49,6 +49,8 @@ test:integration:
     - docker version
     # Init the git submodules
     - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
+    # Required for mender-aritfact
+    - apk add --no-cache openssl1.1-compat
     - git submodule update --init --recursive
     # Install test dependencies
     - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
