@@ -12,7 +12,7 @@ include:
 
 variables:
   MENDER_VERSION: mender-master
-  MENDER_ARTIFACT_VERSION: master
+  MENDER_ARTIFACT_VERSION: 4.0.0
   MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
 
 test:unit:
@@ -49,17 +49,15 @@ test:integration:
     - docker version
     # Init the git submodules
     - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
-    # Required for mender-aritfact
-    - apk add --no-cache openssl1.1-compat
     - git submodule update --init --recursive
     # Install test dependencies
     - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
     - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
-
     # Download and install mender-artifact
-    - curl -f -O https://downloads.mender.io/mender-artifact/$MENDER_ARTIFACT_VERSION/linux/mender-artifact
-    - chmod ugo+x mender-artifact
-    - mv mender-artifact /usr/bin/
+    - apk add --no-cache dpkg
+    - wget "https://downloads.mender.io/repos/debian/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
+      --output-document mender-artifact.deb
+    - dpkg --extract mender-artifact.deb /
   script:
     - cd tests/integration/
     - GENERATE_PYTEST_REPORT=true ./run.sh
