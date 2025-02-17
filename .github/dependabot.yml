@@ -1,9 +1,19 @@
 version: 2
 updates:
-  - commit-message:
+
+  - package-ecosystem: gitsubmodule
+    commit-message:
       prefix: "chore"
     directory: /
-    package-ecosystem: gitsubmodule
+    schedule:
+      interval: monthly
+    reviewers:
+      - "mendersoftware/client-dependabot-reviewers"
+
+  - package-ecosystem: docker
+    commit-message:
+      prefix: "chore"
+    directory: /tests/integration
     schedule:
       interval: monthly
     reviewers:
