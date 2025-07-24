@@ -9,6 +9,7 @@ include:
       - '.gitlab-ci-check-commits.yml'
       - '.gitlab-ci-check-license.yml'
       - '.gitlab-ci-check-python3-format.yml'
+  - component: gitlab.com/Northern.tech/Mender/mendertesting/workstation-tools-repository@master
 
 variables:
   MENDER_VERSION: mender-master
@@ -53,11 +54,8 @@ test:integration:
     # Install test dependencies
     - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
     - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
-    # Download and install mender-artifact
-    - apk add --no-cache dpkg
-    - wget "https://downloads.mender.io/repos/debian/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
-      --output-document mender-artifact.deb
-    - dpkg --extract mender-artifact.deb /
+    # Install mender-artifact
+    - !reference [.install_mender_artifact]
   script:
     - cd tests/integration/
     - GENERATE_PYTEST_REPORT=true ./run.sh
