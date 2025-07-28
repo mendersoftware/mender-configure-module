@@ -12,7 +12,7 @@ include:
 
 variables:
   MENDER_VERSION: mender-master
-  MENDER_ARTIFACT_VERSION: 4.0.0
+  MENDER_ARTIFACT_VERSION: 4.1.0
   MENDER_CONFIGURE_VERSION: $CI_COMMIT_REF_NAME
 
 test:unit:
@@ -55,7 +55,7 @@ test:integration:
     - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
     # Download and install mender-artifact
     - apk add --no-cache dpkg
-    - wget "https://downloads.mender.io/repos/debian/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
+    - wget "https://downloads.mender.io/repos/workstation-tools/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
       --output-document mender-artifact.deb
     - dpkg --extract mender-artifact.deb /
   script:
