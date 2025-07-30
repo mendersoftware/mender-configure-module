@@ -44,7 +44,9 @@ SERVER="$(echo "$DBUS_REPLY" | sed -ne '2p')"
 
 if [ -z "$AUTH_TOKEN" ]; then
     echo "mender-inventory-mender-configure: An authentication token could not be obtained over DBus."
-    exit 1
+    # Don't produce an error. Most likely mender-auth is not ready or
+    # the device hasn't been accepted
+    exit 0
 fi
 if [ -z "$SERVER" ]; then
     echo "mender-inventory-mender-configure: A server address could not be obtained over DBus."
