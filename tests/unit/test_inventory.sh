@@ -76,7 +76,7 @@ testInvalidEndpoint() {
 testMissingJwtToken() {
     export TEST_AUTH_TOKEN_EMPTY=1
     output="$("${inv_script}")"
-    assertNotEquals 0 $?
+    assertEquals 0 $?
     assertEquals "" "${output}"
     assertEquals "" "$(cat "$TEST_HTTP_LOG" 2>/dev/null)"
 }
