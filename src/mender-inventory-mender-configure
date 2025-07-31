@@ -30,23 +30,26 @@ if ! [ -f "$CONFIG" ]; then
 fi
 
 # Fetch Authentication token and server from Mender Auth Manager.
-DBUS_REPLY="$(dbus-send \
-                        --system \
-                        --print-reply \
-                        --dest=io.mender.AuthenticationManager \
-                        /io/mender/AuthenticationManager \
-                        io.mender.Authentication1.GetJwtToken \
-                        | sed -ne '/^ *string ".*" *$/ {s/^ *string "\(.*\)" *$/\1/; p}')"
+DBUS_RAW=$(dbus-send \
+    --system \
+    --print-reply \
+    --dest=io.mender.AuthenticationManager \
+    /io/mender/AuthenticationManager \
+    io.mender.Authentication1.GetJwtToken)
+
+DBUS_REPLY=$(echo "$DBUS_RAW" | sed -ne '/^ *string ".*" *$/ {s/^ *string "\(.*\)" *$/\1/; p}')
 
 AUTH_TOKEN="$(echo "$DBUS_REPLY" | sed -ne '1p')"
 SERVER="$(echo "$DBUS_REPLY" | sed -ne '2p')"
 
 if [ -z "$AUTH_TOKEN" ]; then
-    echo "An authentication token could not be obtained over DBus."
-    exit 1
+    echo "mender-inventory-mender-configure: An authentication token could not be obtained over DBus."
+    # Don't produce an error. Most likely mender-auth is not ready or
+    # the device hasn't been accepted
+    exit 0
 fi
 if [ -z "$SERVER" ]; then
-    echo "A server address could not be obtained over DBus."
+    echo "mender-inventory-mender-configure: A server address could not be obtained over DBus."
     exit 1
 fi
 
