@@ -58,7 +58,7 @@ MenderTestQemux86_64RofsMenderConfigure = ContainerProps(
     append_mender_version=False,
     key_filename=path.join(
         path.dirname(path.realpath(__file__)),
-        "../mender_test_containers/docker/ssh-keys/key",
+        "../mender_test_containers/qemu-test-containers/ssh-keys/key",
     ),
 )
 
