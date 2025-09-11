@@ -7,6 +7,6 @@ package.json @mendersoftware/client-dependabot-reviewers
 package-lock.json @mendersoftware/client-dependabot-reviewers
 
 # Git submodules
-tests/unit/shunit2/ @mendersoftware/client-dependabot-reviewers
-tests/integration/mender_integration/ @mendersoftware/client-dependabot-reviewers
-tests/integration/mender_test_containers/ @mendersoftware/client-dependabot-reviewers
+/tests/unit/shunit2 @mendersoftware/client-dependabot-reviewers
+/tests/integration/mender_integration @mendersoftware/client-dependabot-reviewers
+/tests/integration/mender_test_containers @mendersoftware/client-dependabot-reviewers
