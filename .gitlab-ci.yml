@@ -30,7 +30,7 @@ test:integration:
   needs: []
   image: docker:24.0.7-dind-alpine3.18
   tags:
-    - mender-qa-worker-backend-integration-tests
+    - hetzner-amd-beefy
   before_script:
     # DinD setup in Mender CI runners
     - unset DOCKER_HOST
