@@ -24,58 +24,135 @@ CONFIG=${TEST_CONFIG:-/var/lib/mender-configure/device-config.json}
 CONFIG_CHECKSUM=${TEST_CONFIG_CHECKSUM:-/var/lib/mender-configure/device-config-reported.sha256}
 CONFIG_ENDPOINT=${TEST_CONFIG_ENDPOINT:-api/devices/v1/deviceconfig/configuration}
 
-# If the configuration file doesn't exist, exit silently
+# If the configuration file doesn't exist, return success silently
 if ! [ -f "$CONFIG" ]; then
     exit 0
 fi
 
-# Fetch Authentication token and server from Mender Auth Manager.
-DBUS_RAW=$(dbus-send \
+#
+# report_config: Reports the current mender-configure config to the server.
+#
+# Return values:
+#   0: Success. The configuration was successfully reported or the checksum indicated no change.
+#   1: Authentication Error. $AUTH_TOKEN was empty.
+#   2: Missing Server Address Error. $SERVER was empty.
+#   3: Server Reporting Error. $AUTH_TOKEN was expired or other unexpected error.
+#
+report_config()
+{
+    # Get Authentication token and server from Mender Auth Manager.
+    DBUS_RAW=$(dbus-send \
+        --system \
+        --print-reply \
+        --dest=io.mender.AuthenticationManager \
+        /io/mender/AuthenticationManager \
+        io.mender.Authentication1.GetJwtToken)
+
+    DBUS_REPLY=$(echo "$DBUS_RAW" | sed -ne '/^ *string ".*" *$/ {s/^ *string "\(.*\)" *$/\1/; p}')
+
+    AUTH_TOKEN="$(echo "$DBUS_REPLY" | sed -ne '1p')"
+    SERVER="$(echo "$DBUS_REPLY" | sed -ne '2p')"
+
+
+    if [ -z "$AUTH_TOKEN" ]; then
+        return 1
+    fi
+    if [ -z "$SERVER" ]; then
+        return 2
+    fi
+
+    # Include the JWT token in the checksum to report again the
+    # configuration to the server in case of new authorization after
+    # device decommissioning or connection to a different Mender server
+    local COMPUTED_CHECKSUM="$( (echo "$AUTH_TOKEN"; cat "$CONFIG") | sha256sum -)"
+
+    # If checksum hasn't changed since previous report, exit silently.
+    if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSUM")" ]; then
+        return 0
+    fi
+
+    local ret=0
+    curl \
+        -s \
+        -S \
+        -Lf \
+        -X PUT \
+        -H "Authorization: Bearer ${AUTH_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "@${CONFIG}" \
+        "${SERVER}/${CONFIG_ENDPOINT}" || ret=$?
+
+
+    if [ "$ret" -ne 0 ]; then
+        return 3
+    fi
+    # Update checksum atomically.
+    echo "$COMPUTED_CHECKSUM" > "$CONFIG_CHECKSUM.tmp"
+    sync "$CONFIG_CHECKSUM.tmp"
+    mv "$CONFIG_CHECKSUM.tmp" "$CONFIG_CHECKSUM"
+    sync "$(dirname "$CONFIG_CHECKSUM")"
+    return 0
+}
+
+ret=0
+report_config || ret=$?
+
+if [ "$ret" -eq 0 ]; then
+    exit 0
+fi
+
+# here: expired or inexistent token
+
+tmp_file=$(mktemp)
+
+(dbus-monitor \
+    --system \
+    "type='signal',interface='io.mender.Authentication1'" \
+    > $tmp_file) &
+PID=$!
+
+cleanup() {
+   pkill -P $PID
+   rm $tmp_file
+}
+trap cleanup EXIT QUIT TERM
+
+FETCH_VALUE=$(dbus-send \
     --system \
     --print-reply \
     --dest=io.mender.AuthenticationManager \
     /io/mender/AuthenticationManager \
-    io.mender.Authentication1.GetJwtToken)
+    io.mender.Authentication1.FetchJwtToken)
 
-DBUS_REPLY=$(echo "$DBUS_RAW" | sed -ne '/^ *string ".*" *$/ {s/^ *string "\(.*\)" *$/\1/; p}')
+case $FETCH_VALUE in
+    *"true"*)
+        ret=0
+        timeout 5 tail -fn0 $tmp_file | head -n1 > /dev/null || ret=1
 
-AUTH_TOKEN="$(echo "$DBUS_REPLY" | sed -ne '1p')"
-SERVER="$(echo "$DBUS_REPLY" | sed -ne '2p')"
+        if [ "$ret" -eq 0 ]; then
+            # A D-Bus signal was received, try reporting config again
+            report_config || ret=$?
+        fi
+        ;;
+    *)
+        ret=1
+        ;;
+esac
 
-if [ -z "$AUTH_TOKEN" ]; then
-    echo "mender-inventory-mender-configure: An authentication token could not be obtained over DBus."
-    # Don't produce an error. Most likely mender-auth is not ready or
-    # the device hasn't been accepted
-    exit 0
-fi
-if [ -z "$SERVER" ]; then
-    echo "mender-inventory-mender-configure: A server address could not be obtained over DBus."
-    exit 1
-fi
 
-# Include the JWT token in the checksum to report again the
-# configuration to the server in case of new authorization after
-# device decommissioning or connection to a different Mender server
-COMPUTED_CHECKSUM="$( (echo "$AUTH_TOKEN"; cat "$CONFIG") | sha256sum -)"
-
-# If checksum hasn't changed since previous report, exit silently.
-if [ -f "$CONFIG_CHECKSUM" ] && [ "$COMPUTED_CHECKSUM" = "$(cat "$CONFIG_CHECKSUM")" ]; then
-    exit 0
-fi
-
-# Do the report.
-curl \
-    -s \
-    -S \
-    -Lf \
-    -X PUT \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -d "@${CONFIG}" \
-    "${SERVER}/${CONFIG_ENDPOINT}"
-
-# Update checksum atomically.
-echo "$COMPUTED_CHECKSUM" > "$CONFIG_CHECKSUM.tmp"
-sync "$CONFIG_CHECKSUM.tmp"
-mv "$CONFIG_CHECKSUM.tmp" "$CONFIG_CHECKSUM"
-sync "$(dirname "$CONFIG_CHECKSUM")"
+case "$ret" in
+    1)
+        echo "mender-inventory-mender-configure: An authentication token could not be obtained over DBus."
+        # Don't produce an error. Most likely mender-auth is not ready or
+        # the device hasn't been accepted
+        exit 0
+        ;;
+    2)
+        echo "mender-inventory-mender-configure: A server address could not be obtained over DBus."
+        exit 1
+        ;;
+    3)
+        echo "mender-inventory-mender-configure: Something went wrong while reporting the config to the server."
+        exit 1
+        ;;
+esac
