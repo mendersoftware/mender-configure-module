@@ -20,7 +20,7 @@ test:unit:
   needs: []
   image: python:alpine
   before_script:
-    - apk add --update git make curl
+    - apk add --update git make curl inotify-tools
     - git submodule update --init --recursive
   script:
     - make test
