@@ -16,8 +16,8 @@
 # Script which configures the led of the Raspberry Pi device, according to the
 # "mender-demo-raspberrypi-led" key, given in the file in the first argument.
 
-LED=/sys/class/leds/led0/trigger
-LED_BRIGHTNESS=/sys/class/leds/led0/brightness
+LED=/sys/class/leds/PWR/trigger
+LED_BRIGHTNESS=/sys/class/leds/PWR/brightness
 
 if [ $# -ne 1 ]; then
     echo "Must be invoked with exactly one argument: The JSON configuration." 1>&2
