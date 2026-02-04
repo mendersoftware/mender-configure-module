@@ -1,0 +1,35 @@
+#!/bin/sh
+set -e
+
+if [ -z $DBUS_CACHE ]; then
+    exit 1
+fi
+
+if [ "$TEST_AUTH_TOKEN_EMPTY" = 1 ];then
+    TEST_AUTH_TOKEN=
+else
+    TEST_AUTH_TOKEN="${TEST_AUTH_TOKEN:-ThisIsAnAuthToken}"
+fi
+
+if [ "$TEST_SERVER_URL_EMPTY" = 1 ]; then
+    TEST_SERVER_URL=
+else
+    TEST_SERVER_URL="${TEST_SERVER_URL:-https://docker.mender.io}"
+fi
+
+cat <<EOF
+signal time=1765534985.619881 sender=org.freedesktop.DBus -> destination=:1.112 serial=2 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameAcquired
+   string ":1.112"
+signal time=1765534985.619914 sender=org.freedesktop.DBus -> destination=:1.112 serial=4 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameLost
+   string ":1.112"
+EOF
+
+while [ -f $DBUS_CACHE ]; do
+    inotifywait -q -e close_write "$DBUS_CACHE" 
+
+    cat <<EOF
+signal time=1765535710.149856 sender=:1.12 -> destination=(null destination) serial=480 path=/io/mender/AuthenticationManager; interface=io.mender.Authentication1; member=JwtTokenStateChange
+    string "$TEST_AUTH_TOKEN"
+    string "$TEST_SERVER_URL"
+EOF
+done
