@@ -52,12 +52,12 @@ esac
 case "$LED_CONF" in
     on)
         # Special case.
-        LED_CONF=gpio
+        LED_CONF=default-on
         LED_CONF_BRIGHTNESS=1
         ;;
     off)
         # Special case.
-        LED_CONF=gpio
+        LED_CONF=none
         LED_CONF_BRIGHTNESS=0
         ;;
     *)
