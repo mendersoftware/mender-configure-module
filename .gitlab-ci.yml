@@ -1,6 +1,5 @@
 stages:
   - test
-  - trigger
 
 include:
   - project: 'Northern.tech/Mender/mendertesting'
@@ -66,16 +65,3 @@ test:integration:
     when: always
     reports:
       junit: ${CI_PROJECT_DIR}/tests/integration/report.xml
-
-trigger:integration:
-  stage: trigger
-  inherit:
-    variables: false
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-  trigger:
-    project: Northern.tech/Mender/integration
-    branch: master
-    strategy: depend
