@@ -1,5 +1,11 @@
 #!/bin/sh
 
+set -e
+
+if [ -z $DBUS_CACHE ]; then
+    exit 1
+fi
+
 if [ "$TEST_AUTH_TOKEN_EMPTY" = 1 ];then
     TEST_AUTH_TOKEN=
 else
@@ -12,13 +18,34 @@ else
     TEST_SERVER_URL="${TEST_SERVER_URL:-https://docker.mender.io}"
 fi
 
-# Taken from a mendersoftware/mender-client-qemu:2.6.0 session, with this
-# command:
-#
-# dbus-send --system --dest=io.mender.AuthenticationManager --print-reply \
-#     /io/mender/AuthenticationManager io.mender.Authentication1.GetJwtToken
-cat <<EOF
+REQUEST_TYPE=$5
+
+case $REQUEST_TYPE in
+    *"FetchJwtToken"*)
+        sleep 1
+
+        # Taken from a mendersoftware/mender-client-qemu:2.6.0 session, with this
+        # command:
+        #
+        # dbus-send --system --dest=io.mender.AuthenticationManager --print-reply \
+        #     /io/mender/AuthenticationManager io.mender.Authentication1.GetJwtToken
+
+        cat > $DBUS_CACHE  << EOF
 method return time=1612339847.127751 sender=:1.6 -> destination=:1.9 serial=8 reply_serial=2
-   string "$TEST_AUTH_TOKEN"
-   string "$TEST_SERVER_URL"
+string "$TEST_AUTH_TOKEN"
+string "$TEST_SERVER_URL"
 EOF
+        cat <<EOF
+method return time=1765535708.978733 sender=:1.12 -> destination=:1.261 serial=479 reply_serial=2
+   boolean true
+EOF
+        ;;
+    *"GetJwtToken"*)
+        cat "$DBUS_CACHE"   
+        ;;
+    *)
+        echo "dbus-send: invalid argument '$REQUEST_TYPE'"
+        exit 1
+        ;;
+esac
+
