@@ -12,6 +12,9 @@ include:
       - '.gitlab-ci-check-commits.yml'
       - '.gitlab-ci-check-license.yml'
       - '.gitlab-ci-check-python3-format.yml'
+  - project: "Northern.tech/Mender/mendertesting"
+    file: "qa-common/send-results-to-mantra.yml"
+    ref: "master"
 
 default:
   tags: !reference [.qa-common-default-runner, tags]
@@ -68,6 +71,9 @@ test:integration:
   script:
     - cd tests/integration/
     - GENERATE_PYTEST_REPORT=true ./run.sh
+  after_script:
+    - MANTRA_PROJECT_NAME: "full_integration"
+    - !reference [.mantra-push-results]
   artifacts:
     expire_in: 2w
     when: always
