@@ -105,14 +105,14 @@ fi
 
 tmp_file=$(mktemp)
 
-(dbus-monitor \
+dbus-monitor \
     --system \
     "type='signal',interface='io.mender.Authentication1'" \
-    > $tmp_file) &
+    > $tmp_file &
 PID=$!
 
 cleanup() {
-   pkill -P $PID
+   kill $PID 2>/dev/null || true
    rm $tmp_file
 }
 trap cleanup EXIT QUIT TERM
