@@ -39,7 +39,6 @@ setUp() {
     export PATH="${test_dir}/helpers:$PATH"
 
     export TEST_SERVER_URL=http://localhost:8080
-    export DBUS_CACHE="$(mktemp)"
 
     mkdir -p "${tmp_dir}"
     mkdir -p "${state_dir}"
@@ -55,23 +54,13 @@ tearDown() {
     unset TEST_CONFIG_ENDPOINT
     unset TEST_AUTH_TOKEN_EMPTY
     unset TEST_AUTH_TOKEN
-
-    rm "$DBUS_CACHE"
-    unset DBUS_CACHE
 }
 
 testSuccessfulReport() {
-    # Tests FetchJwtToken
     output="$("${inv_script}")"
     assertEquals 0 $?
     # Script should never return output on stdout, this goes for all the test
     # cases.
-    assertEquals "" "${output}"
-    assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
-
-    # Tests GetJwtToken
-    output="$("${inv_script}")"
-    assertEquals 0 $?
     assertEquals "" "${output}"
     assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
 }
@@ -146,9 +135,7 @@ Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer T
     assertEquals 'Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"
 Log: path = "/api/devices/v1/deviceconfig/configuration", auth_token = "Bearer ThisIsAnAuthToken"' "$(cat "$TEST_HTTP_LOG")"
 
-    # Simulate a deployment by changing the checksum (clearing current auth_token)
-    # Then change the auth token
-    > "$DBUS_CACHE"
+    # Change the auth token
     export TEST_AUTH_TOKEN="ThisIsAnotherAuthToken"
 
     output="$("${inv_script}")"
