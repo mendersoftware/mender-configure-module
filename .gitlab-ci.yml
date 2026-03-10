@@ -9,9 +9,9 @@ include:
   - project: 'Northern.tech/Mender/mendertesting'
     file:
       - '.gitlab-ci-github-status-updates.yml'
-      - '.gitlab-ci-check-commits.yml'
       - '.gitlab-ci-check-license.yml'
       - '.gitlab-ci-check-python3-format.yml'
+  - component: gitlab.com/Northern.tech/Mender/mendertesting/commit-lint@master
 
 default:
   tags: !reference [.qa-common-default-runner, tags]
