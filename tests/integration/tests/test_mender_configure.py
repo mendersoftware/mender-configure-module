@@ -67,7 +67,8 @@ def test_mender_configure_successful_install(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
+        setup_tester_ssh_connection,
+        "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
 
@@ -78,7 +79,11 @@ def test_mender_configure_successful_install(
     assert device_config == configuration
 
     # commit the installation
-    result = run(setup_tester_ssh_connection, "mender-update commit", warn=True,)
+    result = run(
+        setup_tester_ssh_connection,
+        "mender-update commit",
+        warn=True,
+    )
     logging.debug(result)
     assert result.exited == 0
 
@@ -112,7 +117,8 @@ def test_mender_configure_successful_install(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
+        setup_tester_ssh_connection,
+        "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
 
@@ -163,7 +169,8 @@ def test_mender_configure_successful_install_needs_reboot(
 
     # Verify the content of the configuration
     result = run(
-        setup_tester_ssh_connection, "cat /var/lib/mender-configure/device-config.json",
+        setup_tester_ssh_connection,
+        "cat /var/lib/mender-configure/device-config.json",
     )
     logging.debug(result)
     assert result.exited == 0
@@ -204,11 +211,13 @@ def test_mender_configure_failed_install_config_is_a_folder(
 
     # capture artifact and provides
     result = run(
-        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-artifact 2>/dev/null",
     )
     artifact = result.stdout
     result = run(
-        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-provides 2>/dev/null",
     )
     provides = result.stdout
 
@@ -243,11 +252,13 @@ def test_mender_configure_failed_install_config_is_a_folder(
 
     # capture the new artifact and provides and verify they didn't change
     result = run(
-        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-artifact 2>/dev/null",
     )
     new_artifact = result.stdout
     result = run(
-        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-provides 2>/dev/null",
     )
     new_provides = result.stdout
     assert (new_artifact, new_provides) == (artifact, provides)
@@ -282,11 +293,13 @@ exit 0
 
     # capture artifact and provides
     result = run(
-        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-artifact 2>/dev/null",
     )
     artifact = result.stdout
     result = run(
-        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-provides 2>/dev/null",
     )
     provides = result.stdout
 
@@ -336,11 +349,13 @@ exit 0
 
     # capture the new artifact and provides and verify they didn't change
     result = run(
-        setup_tester_ssh_connection, "mender-update show-artifact 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-artifact 2>/dev/null",
     )
     new_artifact = result.stdout
     result = run(
-        setup_tester_ssh_connection, "mender-update show-provides 2>/dev/null",
+        setup_tester_ssh_connection,
+        "mender-update show-provides 2>/dev/null",
     )
     new_provides = result.stdout
     assert (new_artifact, new_provides) == (artifact, provides)
@@ -372,7 +387,10 @@ def test_mender_configure_managed_configuration(
     configuration = {"key": "value"}
     configuration_url = (
         "https://%s/api/management/v1/deviceconfig/configurations/device/%s"
-        % (get_container_manager().get_mender_gateway(), devices[0],)
+        % (
+            get_container_manager().get_mender_gateway(),
+            devices[0],
+        )
     )
     auth = authentication.Authentication()
     r = requests_retry().put(
@@ -394,7 +412,9 @@ def test_mender_configure_managed_configuration(
     reported = None
     for i in range(180):
         r = requests_retry().get(
-            configuration_url, verify=False, headers=auth.get_auth_token(),
+            configuration_url,
+            verify=False,
+            headers=auth.get_auth_token(),
         )
         assert r.status_code == 200
         reported = r.json().get("reported")
