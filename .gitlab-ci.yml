@@ -66,8 +66,7 @@ test:integration:
     - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
     - git submodule update --init --recursive
     # Install test dependencies
-    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
-    - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
+    - pip install --break-system-packages -r tests/integration/mender_server/backend/tests/requirements-integration.txt
     # Download and install mender-artifact
     - apk add --no-cache dpkg
     - wget "https://downloads.mender.io/repos/workstation-tools/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"

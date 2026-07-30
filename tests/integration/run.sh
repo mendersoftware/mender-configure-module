@@ -19,8 +19,23 @@ MENDER_CONFIGURE=${MENDER_CONFIGURE:-../../src/mender-configure}
 MENDER_INVENTORY_MENDER_CONFIGURE=${MENDER_INVENTORY_MENDER_CONFIGURE:-../../src/mender-inventory-mender-configure}
 MENDER_VERSION=${MENDER_VERSION:-mender-master}
 
-# Generate docker-compose.testing.yml like integration's run.sh
-cat mender_integration/docker-compose.demo.yml > mender_integration/docker-compose.testing.yml
+# Clean up ghost containers and volumes from previous runs. One compose project per backend
+# flavour, so wipe each of them; keep this list in sync with SERVER_PROJECTS in tests/server.py.
+for project in mender mender_enterprise; do
+    docker compose -p "$project" -f mender_server/docker-compose.yml down -v --remove-orphans 2>/dev/null || true
+    docker rm -f $(docker ps -a -q -f "name=^${project}-") 2>/dev/null || true
+    docker volume rm $(docker volume ls -q -f "name=^${project}_") 2>/dev/null || true
+done
+docker rm -f $(docker ps -a -q -f name=virtual_device) 2>/dev/null || true
+
+# Generate the compose files the backend fixtures use, inside the mender_server directory so that
+# the relative paths in them still resolve. Same stack, minus the published host ports, so that the
+# backend does not collide with anything else listening on the host.
+sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/80:80/d' -e '/ports:/d' \
+    mender_server/docker-compose.yml > mender_server/docker-compose.testing.yml
+
+sed -e '/9000:9000/d' -e '/8080:8080/d' -e '/443:443/d' -e '/80:80/d' -e '/ports:/d' \
+    mender_server/compose/docker-compose.enterprise.yml > mender_server/docker-compose.testing.enterprise.yml
 
 # Prepare Docker image
 rm -f mender-image-full-cmdline-rofs-qemux86-64.uefiimg*

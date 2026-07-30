@@ -1,5 +1,11 @@
 venv
+.venv
 mender-configure
 mender-image-full-cmdline-rofs-qemux86-64.uefiimg.ext4
 mender-inventory-mender-configure
 __pycache__
+.docker_lock
+report.xml
+report.html
+mender_server/docker-compose.testing.yml
+mender_server/docker-compose.testing.enterprise.yml
