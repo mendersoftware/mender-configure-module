@@ -2,7 +2,6 @@
 exclude = '''
 (
   /(
-      tests/integration/mender_server
     | tests/integration/venv
     | tests/integration/\.venv
   )/

@@ -1,11 +1,9 @@
-version: '2.1'
 services:
     #
-    # mender-client-qemu with mender-orchestrator added
+    # mender-client-qemu with mender-configure-module added
     #
     mender-client:
       image: mendersoftware/mender-client-qemu-rofs-mender-configure
-      entrypoint: /entrypoint.sh
       stdin_open: true
       tty: true
       privileged: true
