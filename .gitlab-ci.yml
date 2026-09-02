@@ -62,13 +62,16 @@ test:integration:
       done
     # Verify that the docker server is up and running
     - docker version
-    # Init the git submodules
     - apk add --update --no-cache $(cat tests/integration/apk-requirements.txt)
+    # Init the git submodules
     - git submodule update --init --recursive
-    # Install test dependencies
-    - apk add --update --no-cache $(cat tests/integration/mender_integration/tests/requirements-system/apk-requirements.txt)
-    - pip install -r tests/integration/mender_integration/tests/requirements-python/python-requirements.txt
-    # Download and install mender-artifact
+    # Test dependencies go in a venv, not the system interpreter, so they cannot
+    # collide with the apk-installed tooling in this image.
+    - python3 -m virtualenv /.venv
+    - source /.venv/bin/activate
+    # TODO: QA-1701 replace with 'pip install mender-testkit' once the package is published.
+    # It carries testutils, the Server facade and mender-server's compose files.
+    - pip install git+https://github.com/mendersoftware/mender-testkit.git@v0.1.0
     - apk add --no-cache dpkg
     - wget "https://downloads.mender.io/repos/workstation-tools/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
       --output-document mender-artifact.deb

@@ -1,2 +1,11 @@
-git
+bash
+g++
 gcompat
+zstd
+git
+libffi-dev
+make
+openssh-client
+py3-pip
+py3-virtualenv
+python3-dev

@@ -19,8 +19,14 @@ MENDER_CONFIGURE=${MENDER_CONFIGURE:-../../src/mender-configure}
 MENDER_INVENTORY_MENDER_CONFIGURE=${MENDER_INVENTORY_MENDER_CONFIGURE:-../../src/mender-inventory-mender-configure}
 MENDER_VERSION=${MENDER_VERSION:-mender-master}
 
-# Generate docker-compose.testing.yml like integration's run.sh
-cat mender_integration/docker-compose.demo.yml > mender_integration/docker-compose.testing.yml
+# Clean up ghost containers and volumes from previous runs. One compose project per backend
+# flavour, so wipe each of them; keep this list in sync with SERVER_PROJECTS in mender_testkit.
+for project in mender mender_enterprise; do
+    docker rm -f $(docker ps -a -q -f "name=^${project}-") 2>/dev/null || true
+    docker volume rm $(docker volume ls -q -f "name=^${project}_") 2>/dev/null || true
+done
+docker rm -f $(docker ps -a -q -f name=virtual_device) 2>/dev/null || true
+
 
 # Prepare Docker image
 rm -f mender-image-full-cmdline-rofs-qemux86-64.uefiimg*

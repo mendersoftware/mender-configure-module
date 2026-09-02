@@ -1,4 +1,4 @@
-# Copyright 2022 Northern.tech AS
+# Copyright 2026 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
 #
 
 import sys
-
 from os import path
 
-sys.path += [path.join(path.dirname(__file__), "..", "mender_integration")]
+sys.path.insert(0, path.abspath(path.dirname(__file__)))
 
 import logging
-import random
 
-import filelock
 import pytest
 import urllib3
 
-from mender_integration.testutils.infra.container_manager import docker_compose_manager
-from mender_integration.testutils.infra.device import MenderDevice
-from mender_integration.tests.MenderAPI import devauth, reset_mender_api
+from mender_testkit.server import Server
+
+import helpers
+import setup
+from setup import project_name_client
+from setup import Env, clients_up, wait_for_devices
+
 from mender_test_containers.conftest import *
 from mender_test_containers.container_props import *
-from mender_integration.tests.conftest import pytest_exception_interact
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
@@ -39,19 +39,35 @@ logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 logging.getLogger("filelock").setLevel(logging.INFO)
 logging.getLogger("invoke").setLevel(logging.INFO)
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
-
-
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
-collect_ignore = ["mender_integration"]
-
-docker_lock = filelock.FileLock("docker_lock")
-docker_compose_instance = "mender" + str(random.randint(0, 9999999))
-
+machine_name = "qemux86-64"
 inline_logs = False
+
+# The backend lifecycle -- os_backend_server and enterprise_backend_server -- comes
+# from mender_testkit's pytest plugin, which also decides which compose files to
+# use.
+
+CLIENT_COMPOSE_FILE = "docker-compose.client.rofs.configure.yml"
+
+
+@pytest.fixture(scope="function", autouse=True)
+def devices_down():
+    yield
+    # The client compose file declares the backend network as external, so teardown has to resolve
+    # it to the same name clients_up used.
+    helpers.docker_compose_stop(
+        project_name=project_name_client,
+        files=[CLIENT_COMPOSE_FILE],
+        env=setup.client_compose_env(),
+    )
+
+
+# -------------------------------------------------------------------------
 
 MenderTestQemux86_64RofsMenderConfigure = ContainerProps(
     image_name="mendersoftware/mender-client-qemu-rofs-mender-configure",
@@ -75,32 +91,18 @@ def mender_version():
     return "master"
 
 
-class DockerComposeStandardSetupOneConfigureRofsClient(
-    docker_compose_manager.DockerComposeNamespace
-):
-    def __init__(
-        self, extra_compose_file="../docker-compose.client.rofs.configure.yml"
-    ):
-        compose_files = docker_compose_manager.DockerComposeNamespace.QEMU_CLIENT_FILES
-        compose_files += [
-            path.join(path.dirname(__file__), extra_compose_file),
-        ]
-        docker_compose_manager.DockerComposeNamespace.__init__(
-            self, name="mender", extra_files=compose_files
-        )
-
-
 @pytest.fixture(scope="function")
-def standard_setup_one_rofs_configure_client(request):
-    env = DockerComposeStandardSetupOneConfigureRofsClient()
-    request.addfinalizer(env.teardown)
+def standard_setup_one_rofs_configure_client(request, os_backend_server):
+    env = Env()
+    server = Server()
+    env.server = server
 
-    env.setup()
+    env.devices = clients_up(1, CLIENT_COMPOSE_FILE, network=server.network)
+    env.device = env.devices[0]
 
-    env.device = MenderDevice(env.get_mender_clients()[0])
-    env.device.ssh_is_opened()
+    wait_for_devices(env)
 
-    reset_mender_api(env)
-    devauth.accept_devices(1)
+    server.accept_devices(env.devices)
+    assert 1 == len(server.get_accepted_devices())
 
     return env

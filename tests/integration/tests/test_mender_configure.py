@@ -21,12 +21,6 @@ import tempfile
 import time
 
 from mender_test_containers.helpers import run, put
-from mender_integration.tests.MenderAPI import (
-    authentication,
-    devauth,
-    get_container_manager,
-)
-from mender_integration.tests.MenderAPI.requests_helpers import requests_retry
 
 from helpers import make_configuration_artifact, make_configuration_apply_script
 
@@ -364,12 +358,15 @@ exit 0
 def test_mender_configure_managed_configuration(
     standard_setup_one_rofs_configure_client,
 ):
+    env = standard_setup_one_rofs_configure_client
+    server = env.server
+
     # Make the mender-configure inventory script executable.
     # This is needed because ext4_manipulator.py doesn't support
     # setting permissions, and when we replace the inventory script
     # in install-mender-configure.py, we set permissions to 644 which
     # prevents the Mender Client executing it
-    mender_device = standard_setup_one_rofs_configure_client.device
+    mender_device = env.device
     mender_device.run("mount -o remount,rw /", wait=60)
     mender_device.run(
         "chmod 755 /usr/share/mender/inventory/mender-inventory-mender-configure",
@@ -378,46 +375,21 @@ def test_mender_configure_managed_configuration(
     mender_device.run("mount -o remount,ro /", wait=60)
 
     # list of devices
-    devices = list(
-        set([device["id"] for device in devauth.get_devices_status("accepted")])
-    )
+    devices = list(set([device["id"] for device in server.get_accepted_devices()]))
     assert 1 == len(devices)
+    device_id = devices[0]
 
     # set the device's configuration
     configuration = {"key": "value"}
-    configuration_url = (
-        "https://%s/api/management/v1/deviceconfig/configurations/device/%s"
-        % (
-            get_container_manager().get_mender_gateway(),
-            devices[0],
-        )
-    )
-    auth = authentication.Authentication()
-    r = requests_retry().put(
-        configuration_url,
-        verify=False,
-        headers=auth.get_auth_token(),
-        json=configuration,
-    )
+    server.set_device_configuration(device_id, configuration)
 
     # deploy the configurations
-    r = requests_retry().post(
-        configuration_url + "/deploy",
-        verify=False,
-        headers=auth.get_auth_token(),
-        json={"retries": 0},
-    )
+    server.deploy_device_configuration(device_id)
 
     # loop and verify the reported configuration
     reported = None
     for i in range(180):
-        r = requests_retry().get(
-            configuration_url,
-            verify=False,
-            headers=auth.get_auth_token(),
-        )
-        assert r.status_code == 200
-        reported = r.json().get("reported")
+        reported = server.get_device_configuration(device_id).get("reported")
         if reported == configuration:
             break
         time.sleep(1)

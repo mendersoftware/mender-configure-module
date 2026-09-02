@@ -1,8 +1,20 @@
-version: '2.1'
 services:
-
     #
-    # mender-client-rofs with Mender Configure Module
+    # mender-client-qemu with mender-configure-module added
     #
     mender-client:
-            image: mendersoftware/mender-client-qemu-rofs-mender-configure
+      image: mendersoftware/mender-client-qemu-rofs-mender-configure
+      stdin_open: true
+      tty: true
+      privileged: true
+      environment:
+        SERVER_URL: "https://docker.mender.io"
+      networks:
+        - mender_server
+
+networks:
+  # Which backend the device talks to. Set by clients_up from the Server's plan, so a client can be
+  # attached to either the OS or the enterprise stack.
+  mender_server:
+    external: true
+    name: ${MENDER_SERVER_NETWORK:-mender_default}

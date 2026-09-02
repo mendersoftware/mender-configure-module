@@ -1,3 +1,4 @@
-mender_integration
+mender_server
 mender-image-full-cmdline-rofs-qemux86-64.uefiimg.ext4
 venv
+.venv
