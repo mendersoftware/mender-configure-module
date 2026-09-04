@@ -19,16 +19,18 @@ from os import path
 sys.path.insert(0, path.abspath(path.dirname(__file__)))
 
 import logging
-
 import pytest
 import urllib3
 
 from mender_testkit.server import Server
-
-import helpers
-import setup
-from setup import project_name_client
-from setup import Env, clients_up, wait_for_devices
+from mender_testkit.docker import docker_compose_stop
+from mender_testkit.devices import (
+    Env,
+    clients_up,
+    wait_for_devices,
+    client_compose_env,
+    project_name_client,
+)
 
 from mender_test_containers.conftest import *
 from mender_test_containers.container_props import *
@@ -60,10 +62,10 @@ def devices_down():
     yield
     # The client compose file declares the backend network as external, so teardown has to resolve
     # it to the same name clients_up used.
-    helpers.docker_compose_stop(
+    docker_compose_stop(
         project_name=project_name_client,
         files=[CLIENT_COMPOSE_FILE],
-        env=setup.client_compose_env(),
+        env=client_compose_env(),
     )
 
 

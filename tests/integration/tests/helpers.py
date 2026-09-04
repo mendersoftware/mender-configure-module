@@ -18,7 +18,6 @@ import logging
 import os
 import subprocess
 
-import filelock
 
 from tempfile import NamedTemporaryFile
 
@@ -85,46 +84,3 @@ def make_configuration_apply_script(setup_tester_ssh_connection, script):
             "mount -o remount,ro /",
         )
 
-
-docker_lock = filelock.FileLock(".docker_lock")
-logger = logging.getLogger(__name__)
-
-
-def docker_compose_start(project_name, files, cwd=None, env=None):
-    with docker_lock:
-        cmd = ["docker", "compose", "--project-name", project_name]
-        for file in files:
-            cmd.extend(["--file", file])
-        cmd += ["up", "--detach"]
-        subprocess.check_call(cmd, cwd=cwd, env=_compose_env(env))
-
-
-def docker_compose_stop(project_name, files, cwd=None, env=None):
-    with docker_lock:
-        cmd = ["docker", "compose", "--project-name", project_name]
-        for file in files:
-            cmd.extend(["--file", file])
-        cmd += ["down", "--volumes", "--remove-orphans"]
-        subprocess.check_call(cmd, cwd=cwd, env=_compose_env(env))
-
-
-def _compose_env(env):
-    # None means "inherit", matching subprocess' own default.
-    return None if env is None else {**os.environ, **env}
-
-
-def get_mac_address(device):
-    result = device.run(
-        "/usr/share/mender/identity/mender-device-identity", hide=True, warn_only=True
-    ).strip()
-    return result.split("=")[-1]
-
-
-def get_device_id(device, server):
-    mac_address = get_mac_address(device)
-    device_obj = next(
-        d
-        for d in server.get_accepted_devices()
-        if d["identity_data"]["mac"] == mac_address
-    )
-    return device_obj["id"]
