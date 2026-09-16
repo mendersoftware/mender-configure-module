@@ -65,7 +65,7 @@ test:integration:
     # collide with the apk-installed tooling in this image.
     - python3 -m virtualenv /.venv
     - source /.venv/bin/activate
-    - pip install mender-testkit==0.1.1
+    - pip install mender-testkit==0.1.2
     - apk add --no-cache dpkg
     - wget "https://downloads.mender.io/repos/workstation-tools/pool/main/m/mender-artifact/mender-artifact_${MENDER_ARTIFACT_VERSION}-1%2bubuntu%2bnoble_amd64.deb"
       --output-document mender-artifact.deb
