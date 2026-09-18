@@ -25,12 +25,7 @@ export TEST_HTTP_LOG="${tmp_dir}/http.log"
 oneTimeSetUp() {
     "${test_dir}/helpers/mender-configure-server.py" &
     TEST_SERVER_PID=$!
-    for _ in $(seq 1 10); do
-        if curl --output /dev/null --silent "http://localhost:8080/"; then
-            break
-        fi
-        sleep 0.5
-    done
+    curl --output /dev/null --silent --retry 5 --retry-delay 1 --retry-connrefused "http://localhost:8080/" || true
 }
 
 oneTimeTearDown() {
